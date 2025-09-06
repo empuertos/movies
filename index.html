@@ -6,64 +6,40 @@
 <title>Movies</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#141414;color:#fff}
-header{background:#141414;padding:20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-header h1{color:#e50914;margin:0}
-input[type="text"]{padding:8px;font-size:16px;width:300px;border-radius:4px;border:none}
-section{margin-top:20px}
-h2{margin-left:20px}
+header{background:#141414;padding:15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+header h1{color:#e50914;margin:0;font-size:18px}
+input[type="text"]{padding:6px;font-size:14px;width:150px;border-radius:4px;border:none}
+section{margin-top:15px}
+h2{margin-left:10px;font-size:16px}
 .carousel-wrapper{position:relative}
-.carousel{display:flex;overflow-x:auto;gap:10px;padding:20px;scroll-behavior:smooth;cursor:grab}
+.carousel{display:flex;overflow-x:auto;gap:8px;padding:15px;scroll-behavior:smooth;cursor:grab}
 .carousel::-webkit-scrollbar{display:none}
-.movie-card{min-width:150px;cursor:pointer;position:relative;transition:transform .3s;flex-shrink:0}
-.movie-card img{width:100%;border-radius:8px;display:block}
-.movie-card:hover{transform:scale(1.2);z-index:5}
-.movie-title{position:absolute;bottom:5px;left:5px;right:5px;background:rgba(0,0,0,.7);padding:2px 4px;font-size:14px;border-radius:4px;text-align:center}
-.preview-card{position:absolute;top:-240px;left:50%;transform:translateX(-50%);width:300px;background:#222;padding:10px;border-radius:8px;display:none;flex-direction:column;z-index:10;transition:all .3s}
-.preview-card img{width:100%;border-radius:8px}
-.preview-card h3{margin:5px 0;font-size:16px}
-.preview-card p{font-size:14px;color:#ccc}
-.preview-card .buttons{display:flex;gap:10px;margin-top:5px}
-.preview-card button{flex:1;padding:5px;font-size:14px;border:none;border-radius:4px;cursor:pointer}
-.preview-card .play{background:#e50914;color:#fff}
-.preview-card .add{background:#444;color:#fff}
-.preview-card .remove{background:#888;color:#fff}
-.arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:40px;color:rgba(255,255,255,.7);background:rgba(0,0,0,.4);border-radius:50%;padding:5px 10px;cursor:pointer;z-index:5;user-select:none}
-.arrow:hover{color:#fff;background:rgba(0,0,0,.7)}
-.left-arrow{left:10px}
-.right-arrow{right:10px}
-iframe{display:none}
-@media(max-width:768px){
-  input[type="text"]{width:150px}
-  .movie-card{min-width:120px}
-  .preview-card{display:none!important}
-}
+.movie-card{min-width:120px;cursor:pointer;position:relative;transition:transform .2s;flex-shrink:0}
+.movie-card img{width:100%;border-radius:6px;display:block}
+.movie-title{position:absolute;bottom:3px;left:3px;right:3px;background:rgba(0,0,0,.7);padding:1px 3px;font-size:12px;border-radius:4px;text-align:center}
+.preview-card{display:none!important}
+.arrow{display:none} /* hide arrows on mobile */
 </style>
 </head>
 <body>
 <header>
   <h1>Movies</h1>
-  <input type="text" id="search" placeholder="Search movies...">
+  <input type="text" id="search" placeholder="Search...">
 </header>
 
 <section>
   <h2>Trending Now</h2>
   <div class="carousel-wrapper">
-      <div class="arrow left-arrow" onclick="scrollCarousel('trending',-300)">&#10094;</div>
-      <div class="arrow right-arrow" onclick="scrollCarousel('trending',300)">&#10095;</div>
       <div class="carousel" id="trending"></div>
   </div>
 
   <h2>Top 10</h2>
   <div class="carousel-wrapper">
-      <div class="arrow left-arrow" onclick="scrollCarousel('top10',-300)">&#10094;</div>
-      <div class="arrow right-arrow" onclick="scrollCarousel('top10',300)">&#10095;</div>
       <div class="carousel" id="top10"></div>
   </div>
 
   <h2>My List</h2>
   <div class="carousel-wrapper">
-      <div class="arrow left-arrow" onclick="scrollCarousel('mylist',-300)">&#10094;</div>
-      <div class="arrow right-arrow" onclick="scrollCarousel('mylist',300)">&#10095;</div>
       <div class="carousel" id="mylist"></div>
   </div>
 </section>
@@ -74,6 +50,7 @@ let myList=[];
 const trendingTitles=["Avengers: Endgame","Joker","Spider-Man: No Way Home","Black Panther","Doctor Strange"];
 const top10Titles=["Inception","Interstellar","The Dark Knight","Fight Club","Pulp Fiction","Forrest Gump","The Matrix","The Godfather","The Lord of the Rings","Gladiator"];
 
+// fetch movies in parallel
 async function fetchMovies(titles){
   try{
     const results=await Promise.all(titles.map(title=>
@@ -85,70 +62,32 @@ async function fetchMovies(titles){
   }catch(e){console.error(e);return []}
 }
 
+// render carousel for mobile
 function renderCarousel(movies,containerId){
   const container=document.getElementById(containerId);
   container.innerHTML=movies.map(movie=>`
     <div class="movie-card">
       <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
       <div class="movie-title">${movie.title}</div>
-      <div class="preview-card">
-        <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
-        <h3>${movie.title}</h3>
-        <p>${movie.plot}</p>
-        <div class="buttons">
-          <button class="play" data-id="${movie.imdb}">Play</button>
-          ${containerId==="mylist"
-            ?`<button class="remove" data-id="${movie.imdb}">Remove</button>`
-            :`<button class="add" data-id="${movie.imdb}">Add to List</button>`}
-        </div>
-      </div>
     </div>
   `).join("");
 
   container.querySelectorAll(".movie-card").forEach(card=>{
-    const preview=card.querySelector(".preview-card");
-    card.onmouseenter=()=>preview.style.display="flex";
-    card.onmouseleave=()=>preview.style.display="none";
-  });
-
-  container.querySelectorAll(".play").forEach(btn=>{
-    btn.onclick=e=>window.open(`https://vidrock.net/movie/${e.target.dataset.id}`,"_blank");
-  });
-  container.querySelectorAll(".add").forEach(btn=>{
-    btn.onclick=e=>{
-      const movie=movies.find(m=>m.imdb===e.target.dataset.id);
-      if(!myList.some(m=>m.imdb===movie.imdb)){
-        myList.push(movie);
-        renderCarousel(myList,"mylist");
-      }
-    };
-  });
-  container.querySelectorAll(".remove").forEach(btn=>{
-    btn.onclick=e=>{
-      myList=myList.filter(m=>m.imdb!==e.target.dataset.id);
-      renderCarousel(myList,"mylist");
-    };
+    card.onclick=()=>window.open(`https://vidrock.net/movie/${movies.find(m=>m.title===card.querySelector(".movie-title").innerText).imdb}`,"_blank");
   });
 }
 
-function scrollCarousel(id,amount){
-  document.getElementById(id).scrollBy({left:amount,behavior:"smooth"});
-}
-
+// enable swipe
 function addSwipe(id){
   const slider=document.getElementById(id);
   let isDown=false,startX,scrollLeft;
-  slider.addEventListener("pointerdown",e=>{
-    isDown=true;slider.style.cursor="grabbing";
-    startX=e.pageX-slider.offsetLeft;scrollLeft=slider.scrollLeft;
-  });
-  slider.addEventListener("pointerleave",()=>{isDown=false;slider.style.cursor="grab"});
-  slider.addEventListener("pointerup",()=>{isDown=false;slider.style.cursor="grab"});
+  slider.addEventListener("pointerdown",e=>{isDown=true;startX=e.pageX-slider.offsetLeft;scrollLeft=slider.scrollLeft});
+  slider.addEventListener("pointerleave",()=>isDown=false);
+  slider.addEventListener("pointerup",()=>isDown=false);
   slider.addEventListener("pointermove",e=>{
     if(!isDown)return;
     e.preventDefault();
-    const x=e.pageX-slider.offsetLeft;
-    slider.scrollLeft=scrollLeft-(x-startX)*2;
+    slider.scrollLeft=scrollLeft-(e.pageX-startX)*2;
   });
 }
 
@@ -164,18 +103,15 @@ async function initMovies(){
 }
 initMovies();
 
-// Search
+// search
 document.getElementById("search").addEventListener("keypress",function(e){
   if(e.key==="Enter"){
-    const query=e.target.value.trim();
-    if(!query)return;
-    fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(query)}`)
-      .then(res=>res.json())
-      .then(data=>{
-        if(data.Search&&data.Search.length>0){
-          window.open(`https://vidrock.net/movie/${data.Search[0].imdbID}`,"_blank");
-        }else alert("Movie not found!");
-      }).catch(console.error);
+    const q=e.target.value.trim();
+    if(!q)return;
+    fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`)
+      .then(r=>r.json())
+      .then(d=>{if(d.Search&&d.Search.length>0)window.open(`https://vidrock.net/movie/${d.Search[0].imdbID}`,"_blank");else alert("Movie not found!")})
+      .catch(console.error);
   }
 });
 </script>
