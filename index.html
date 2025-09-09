@@ -8,7 +8,11 @@
 body{margin:0;font-family:Arial,sans-serif;background:#141414;color:#fff}
 header{background:#141414;padding:15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
 header h1{color:#e50914;margin:0;font-size:18px}
+.search-container{position:relative;display:inline-block}
 input[type="text"]{padding:6px;font-size:14px;width:150px;border-radius:4px;border:none}
+.dropdown{position:absolute;top:100%;left:0;right:0;background:#333;border:1px solid #555;max-height:200px;overflow-y:auto;z-index:1000;display:none}
+.dropdown-item{padding:8px;cursor:pointer;border-bottom:1px solid #444}
+.dropdown-item:hover{background:#555}
 section{margin-top:15px}
 h2{margin-left:10px;font-size:16px}
 .carousel-wrapper{position:relative}
@@ -20,11 +24,15 @@ h2{margin-left:10px;font-size:16px}
 .preview-card{display:none!important}
 .arrow{display:none} /* hide arrows on mobile */
 </style>
+<script src="config.js"></script>
+<script src="utils.js"></script>
 </head>
 <body>
 <header>
   <h1>Movies</h1>
-  <input type="text" id="search" placeholder="Search...">
+  <div class="search-container">
+    <input type="text" id="search" placeholder="Search...">
+  </div>
 </header>
 
 <section>
@@ -45,7 +53,6 @@ h2{margin-left:10px;font-size:16px}
 </section>
 
 <script defer>
-const API_KEY="8924320c";
 let myList=[];
 const trendingTitles=["Avengers: Endgame","Joker","Spider-Man: No Way Home","Black Panther","Doctor Strange"];
 const top10Titles=["Inception","Interstellar","The Dark Knight","Fight Club","Pulp Fiction","Forrest Gump","The Matrix","The Godfather","The Lord of the Rings","Gladiator"];
@@ -63,7 +70,7 @@ async function fetchMovies(titles){
 }
 
 // render carousel for mobile
-function renderCarousel(movies,containerId){
+function renderCarousel(movies,containerId, type = "movie"){
   const container=document.getElementById(containerId);
   container.innerHTML=movies.map(movie=>`
     <div class="movie-card">
@@ -73,7 +80,7 @@ function renderCarousel(movies,containerId){
   `).join("");
 
   container.querySelectorAll(".movie-card").forEach(card=>{
-    card.onclick=()=>window.open(`https://vidrock.net/movie/${movies.find(m=>m.title===card.querySelector(".movie-title").innerText).imdb}`,"_blank");
+    card.onclick=()=>window.open(getVideoUrl(movies.find(m=>m.title===card.querySelector(".movie-title").innerText).imdb, type),"_blank");
   });
 }
 
@@ -96,22 +103,71 @@ async function initMovies(){
     fetchMovies(trendingTitles),
     fetchMovies(top10Titles)
   ]);
-  renderCarousel(trendingMovies,"trending");
-  renderCarousel(top10Movies,"top10");
-  renderCarousel(myList,"mylist");
+  renderCarousel(trendingMovies,"trending", "movie");
+  renderCarousel(top10Movies,"top10", "movie");
+  renderCarousel(myList,"mylist", "series");
   ["trending","top10","mylist"].forEach(addSwipe);
 }
 initMovies();
 
 // search
+document.getElementById("search").addEventListener("input",function(e){
+  const q=e.target.value.trim();
+  let dropdown = document.querySelector('.dropdown');
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+    document.querySelector('.search-container').appendChild(dropdown);
+  }
+  if(!q || q.length < 2){
+    dropdown.style.display = 'none';
+    return;
+  }
+  fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`)
+    .then(r=>r.json())
+    .then(d=>{
+      const results = d.Search || [];
+      if(results.length === 0){
+        dropdown.style.display = 'none';
+        return;
+      }
+      dropdown.innerHTML = results.slice(0,5).map(r=>`<div class="dropdown-item" data-imdb="${r.imdbID}" data-type="${r.Type}">${r.Title} (${r.Year}) - ${r.Type}</div>`).join('');
+      dropdown.style.display = 'block';
+    })
+    .catch(console.error);
+});
+
 document.getElementById("search").addEventListener("keypress",function(e){
   if(e.key==="Enter"){
     const q=e.target.value.trim();
     if(!q)return;
     fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`)
       .then(r=>r.json())
-      .then(d=>{if(d.Search&&d.Search.length>0)window.open(`https://vidrock.net/movie/${d.Search[0].imdbID}`,"_blank");else alert("Movie not found!")})
+      .then(d=>{
+        if(d.Search && d.Search.length > 0){
+          // Determine if first result is movie or series and open accordingly
+          const first = d.Search[0];
+          const type = first.Type === "series" ? "series" : "movie";
+          window.open(getVideoUrl(first.imdbID, type), "_blank");
+        } else {
+          alert("Movie not found!");
+        }
+      })
       .catch(console.error);
+  }
+});
+
+// handle dropdown clicks
+document.addEventListener('click', function(e){
+  const dropdown = document.querySelector('.dropdown');
+  if (e.target.classList.contains('dropdown-item')) {
+    const imdb = e.target.dataset.imdb;
+    const type = e.target.dataset.type;
+    window.open(getVideoUrl(imdb, type === 'series' ? 'series' : 'movie'), '_blank');
+    if (dropdown) dropdown.style.display = 'none';
+    document.getElementById('search').value = '';
+  } else if (dropdown && !document.querySelector('.search-container').contains(e.target)) {
+    dropdown.style.display = 'none';
   }
 });
 </script>
