@@ -54,23 +54,28 @@ h2{margin-left:10px;font-size:16px}
 
 <script defer>
 let myList=[];
-const trendingTitles=["Oppenheimer","Barbie","Killers of the Flower Moon","Dune: Part Two","Mission: Impossible – Dead Reckoning Part One"];
-const top10Titles=["Avatar: The Way of Water","Black Panther: Wakanda Forever","Top Gun: Maverick","The Batman","Jurassic World: Dominion","Doctor Strange in the Multiverse of Madness","Thor: Love and Thunder","Minions: The Rise of Gru","The Flash","Aquaman and the Lost Kingdom"];
+const trendingTitles=["Oppenheimer","Barbie","Killers of the Flower Moon","Dune: Part Two","Mission: Impossible - Dead Reckoning Part One"];
+const top10Titles=["Avatar: The Way of Water","Black Panther: Wakanda Forever","Top Gun: Maverick","The Batman","Jurassic World Dominion","Doctor Strange in the Multiverse of Madness","Thor: Love and Thunder","Minions: The Rise of Gru","The Flash","Aquaman and the Lost Kingdom"];
 
 // fetch movies in parallel
 async function fetchMovies(titles){
   try{
+    console.log('Fetching movies for titles:', titles);
     const results=await Promise.all(titles.map(title=>
       fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&t=${encodeURIComponent(title)}`).then(r=>r.json())
     ));
-    return results.filter(m=>m.Response==="True").map(m=>({
+    console.log('Fetched results:', results);
+    const filtered = results.filter(m=>m.Response==="True").map(m=>({
       title:m.Title,imdb:m.imdbID,poster:m.Poster,plot:m.Plot
     }));
+    console.log('Filtered movies:', filtered);
+    return filtered;
   }catch(e){console.error(e);return []}
 }
 
 // render carousel for mobile
 function renderCarousel(movies,containerId, type = "movie"){
+  console.log('Rendering movies for', containerId, ':', movies);
   const container=document.getElementById(containerId);
   container.innerHTML=movies.map(movie=>`
     <div class="movie-card">
