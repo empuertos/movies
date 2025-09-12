@@ -24,8 +24,9 @@ h2{margin-left:10px;font-size:16px}
 .preview-card{display:none!important}
 .arrow{display:none} /* hide arrows on mobile */
 </style>
-<script src="config.js"></script>
-<script src="utils.js"></script>
+<script>
+const WORKER_URL = 'https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
+</script>
 </head>
 <body>
 <header>
@@ -84,7 +85,7 @@ async function fetchMovies(titles){
   try{
     console.log('Fetching movies for titles:', titles);
     const results=await Promise.all(titles.map(title=>
-      fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&t=${encodeURIComponent(title)}`).then(r=>r.json())
+      fetch(`${WORKER_URL}/api/movie?t=${encodeURIComponent(title)}`).then(r=>r.json())
     ));
     console.log('Fetched results:', results);
     const filtered = results.filter(m=>m.Response==="True").map(m=>({
@@ -100,14 +101,28 @@ function renderCarousel(movies,containerId, type = "movie"){
   console.log('Rendering movies for', containerId, ':', movies);
   const container=document.getElementById(containerId);
   container.innerHTML=movies.map(movie=>`
-    <div class="movie-card">
+    <div class="movie-card" data-imdb="${movie.imdb}">
       <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
       <div class="movie-title">${movie.title}</div>
     </div>
   `).join("");
 
   container.querySelectorAll(".movie-card").forEach(card=>{
-    card.onclick=()=>window.open(getVideoUrl(movies.find(m=>m.title===card.querySelector(".movie-title").innerText).imdb, type),"_blank");
+    card.onclick=async ()=>{
+      try {
+        const imdb = card.dataset.imdb;
+        const res = await fetch(`${WORKER_URL}/api/video?imdb=${imdb}&type=${type}`);
+        const data = await res.json();
+        if(data.url) {
+          window.open(data.url, "_blank");
+        } else {
+          alert("Video URL not found");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to get video URL");
+      }
+    };
   });
 }
 
@@ -150,7 +165,7 @@ document.getElementById("search").addEventListener("input",function(e){
     dropdown.style.display = 'none';
     return;
   }
-  fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`)
+  fetch(`${WORKER_URL}/api/search?s=${encodeURIComponent(q)}`)
     .then(r=>r.json())
     .then(d=>{
       const results = d.Search || [];
@@ -164,33 +179,52 @@ document.getElementById("search").addEventListener("input",function(e){
     .catch(console.error);
 });
 
-document.getElementById("search").addEventListener("keypress",function(e){
+document.getElementById("search").addEventListener("keypress",async function(e){
   if(e.key==="Enter"){
     const q=e.target.value.trim();
     if(!q)return;
-    fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`)
-      .then(r=>r.json())
-      .then(d=>{
-        if(d.Search && d.Search.length > 0){
-          // Determine if first result is movie or series and open accordingly
-          const first = d.Search[0];
-          const type = first.Type === "series" ? "series" : "movie";
-          window.open(getVideoUrl(first.imdbID, type), "_blank");
+    try {
+      const res = await fetch(`${WORKER_URL}/api/search?s=${encodeURIComponent(q)}`);
+      const d = await res.json();
+      if(d.Search && d.Search.length > 0){
+        // Determine if first result is movie or series and open accordingly
+        const first = d.Search[0];
+        const type = first.Type === "series" ? "series" : "movie";
+        const videoRes = await fetch(`${WORKER_URL}/api/video?imdb=${first.imdbID}&type=${type}`);
+        const videoData = await videoRes.json();
+        if(videoData.url) {
+          window.open(videoData.url, "_blank");
         } else {
-          alert("Movie not found!");
+          alert("Video URL not found");
         }
-      })
-      .catch(console.error);
+      } else {
+        alert("Movie not found!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Search failed");
+    }
   }
 });
 
 // handle dropdown clicks
-document.addEventListener('click', function(e){
+document.addEventListener('click', async function(e){
   const dropdown = document.querySelector('.dropdown');
   if (e.target.classList.contains('dropdown-item')) {
     const imdb = e.target.dataset.imdb;
     const type = e.target.dataset.type;
-    window.open(getVideoUrl(imdb, type === 'series' ? 'series' : 'movie'), '_blank');
+    try {
+      const res = await fetch(`${WORKER_URL}/api/video?imdb=${imdb}&type=${type === 'series' ? 'series' : 'movie'}`);
+      const data = await res.json();
+      if(data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        alert("Video URL not found");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to get video URL");
+    }
     if (dropdown) dropdown.style.display = 'none';
     document.getElementById('search').value = '';
   } else if (dropdown && !document.querySelector('.search-container').contains(e.target)) {
