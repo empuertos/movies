@@ -127,137 +127,169 @@ const WORKER_URL = 'https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4
 </header>
 
 <section>
-  <h2>Trending Now</h2>
-  <div class="carousel-wrapper">
-      <div class="carousel" id="trending"></div>
-  </div>
-
-  <h2>Top 10</h2>
-  <div class="carousel-wrapper">
-      <div class="carousel" id="top10"></div>
-  </div>
-
-  <h2>My List</h2>
-  <div class="carousel-wrapper">
-      <div class="carousel" id="mylist"></div>
-  </div>
 </section>
 
-<!-- Video Provider Modal -->
-<div id="videoModal" class="video-modal">
-  <div class="video-modal-content">
-    <div class="video-modal-header">
-      <h3 id="modalTitle">Select Video Provider</h3>
-      <span class="close-modal" id="closeModal">&times;</span>
-    </div>
-    <div id="providerGrid" class="provider-grid">
-      <!-- Provider buttons will be added here by JavaScript -->
-    </div>
-    <div id="videoContainer" class="video-container">
-      <iframe id="videoIframe" class="video-iframe" src="" allowfullscreen></iframe>
-    </div>
-  </div>
-</div>
+<section id="mostPopularMovies" style="margin: 20px;">
+  <h2 style="color: white; margin-left: 10px;">Most Popular Movies</h2>
+  <div id="popularMoviesGrid" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+</section>
 
-<script defer>
-let myList=[];
-const trendingTitles=[
-  "The Toxic Avenger",
-  "Get Out",
-  "Avengers: Endgame",
-  "Orphan",
-  "The Smashing Machine",
-  "Thor: Ragnarok",
-  "Relay",
-  "Joker",
-  "Avengers: Infinity War",
-  "The Threesome",
-  "It",
-  "Spider-Man 3"
-];
-const top10Titles=[
-  "Wednesday",
-  "Dexter: Resurrection",
-  "The Conjuring: Last Rites",
-  "The Thursday Murder Club",
-  "Highest 2 Lowest",
-  "Alien: Earth",
-  "The Paper",
-  "Weapons",
-  "The Terminal List: Dark Wolf",
-  "Wuthering Heights"
-];
-
-// fetch movies in parallel
-async function fetchMovies(titles){
-  try{
-    console.log('Fetching movies for titles:', titles);
-    const results=await Promise.all(titles.map(title=>
-      fetch(`${WORKER_URL}/api/movie?t=${encodeURIComponent(title)}`).then(r=>r.json())
-    ));
-    console.log('Fetched results:', results);
-    const filtered = results.filter(m=>m.Response==="True").map(m=>({
-      title:m.Title,imdb:m.imdbID,poster:m.Poster,plot:m.Plot
-    }));
-    console.log('Filtered movies:', filtered);
-    return filtered;
-  }catch(e){console.error(e);return []}
+<script>
+async function fetchCSV(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  return text;
 }
 
-// render carousel for mobile
-function renderCarousel(movies,containerId, type = "movie"){
-  console.log('Rendering movies for', containerId, ':', movies);
-  const container=document.getElementById(containerId);
-  container.innerHTML=movies.map(movie=>`
-    <div class="movie-card" data-imdb="${movie.imdb}">
-      <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
-      <div class="movie-title">${movie.title}</div>
-    </div>
-  `).join("");
+function parseCSV(csvText) {
+  // Parse CSV with support for quoted fields containing commas
+  const lines = csvText.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  const rows = lines.slice(1);
+  return rows.map(line => {
+    const values = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((header, i) => {
+      obj[header.trim()] = values[i] ? values[i].trim() : '';
+    });
+    return obj;
+  });
+}
 
-  container.querySelectorAll(".movie-card").forEach(card=>{
-    card.onclick=async ()=>{
-      try {
-        const imdb = card.dataset.imdb;
-        const title = card.querySelector('.movie-title').textContent;
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"' && (i === 0 || line[i - 1] !== '\\')) {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  result.push(current);
+  return result;
+}
 
-        // Show provider selection modal instead of opening directly
-        showVideoModal(title, imdb, type);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load video options");
+function createMovieCard(movie) {
+  console.log('Parsed movie object:', movie);
+  const card = document.createElement('div');
+  card.style.width = '150px';
+  card.style.position = 'relative';
+  card.style.cursor = 'pointer';
+
+  const posterUrl = movie.Poster || movie.Image || '';
+  const imdbId = movie['IMDb URL'] ? (movie['IMDb URL'].match(/tt\d{7,8}/) || [''])[0] : '';
+
+  const img = document.createElement('img');
+  console.log('Setting poster URL for movie:', movie['Movie Title'], posterUrl);
+  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://dummyimage.com/150x225/000/fff&text=No+Image';
+  img.alt = movie['Movie Title'] || 'Movie Poster';
+  img.style.width = '100%';
+  img.style.borderRadius = '6px';
+  img.style.display = 'block';
+
+  card.appendChild(img);
+
+  const titleDiv = document.createElement('div');
+  titleDiv.textContent = movie['Movie Title'] || '';
+  titleDiv.style.position = 'absolute';
+  titleDiv.style.bottom = '5px';
+  titleDiv.style.left = '5px';
+  titleDiv.style.right = '5px';
+  titleDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+  titleDiv.style.color = 'white';
+  titleDiv.style.fontSize = '12px';
+  titleDiv.style.padding = '2px 4px';
+  titleDiv.style.borderRadius = '4px';
+  titleDiv.style.textAlign = 'center';
+
+  card.appendChild(titleDiv);
+
+  // Add click handler to open video provider modal
+  card.onclick = () => {
+    showVideoModal(movie['Movie Title'] || '', imdbId, 'movie');
+  };
+
+  return card;
+}
+
+async function fetchPoster(imdbID) {
+  // Ensure imdbID is in correct format: tt followed by 7 or 8 digits
+  const validImdbIdMatch = imdbID.match(/^tt\d{7,8}$/);
+  if (!validImdbIdMatch) {
+    console.warn('Invalid IMDb ID format:', imdbID);
+    return '';
+  }
+  const validImdbID = validImdbIdMatch[0];
+  const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev/api/movie?i=${validImdbID}`;
+  try {
+    console.log('Fetching poster for IMDb ID:', validImdbID);
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      console.error('API response not ok for', validImdbID, response.status);
+      return '';
+    }
+    const text = await response.text();
+    console.log('Raw API response text for', validImdbID, text);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Failed to parse JSON for', validImdbID, parseError);
+      return '';
+    }
+    console.log('Poster data received for', validImdbID, data);
+    if (data && data.Poster && data.Poster !== "N/A") {
+      return data.Poster;
+    } else {
+      console.warn('No valid poster found for', validImdbID);
+    }
+  } catch (error) {
+    console.error('Failed to fetch poster for', validImdbID, error);
+  }
+  return '';
+}
+
+async function renderMostPopularMovies() {
+  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy8FBC-tlZoaaP1mVzAgxTy-817j3ViS_h9dM8rz0VOEkUqVj77vGVrjNneAYQbkP9R48dGMnGIPX4/pub?gid=0&single=true&output=csv';
+  try {
+    const csvText = await fetchCSV(csvUrl);
+    const movies = parseCSV(csvText);
+    const grid = document.getElementById('popularMoviesGrid');
+    for (const movie of movies) {
+      // Extract IMDb ID from IMDb URL
+      let imdbID = '';
+      if (movie['IMDb URL']) {
+      // Fix regex to correctly extract IMDb ID (tt followed by 7 or 8 digits)
+      const match = movie['IMDb URL'].match(/tt\d{7,8}/);
+      if (match) imdbID = match[0];
       }
-    };
-  });
+      if (imdbID) {
+        movie.Poster = await fetchPoster(imdbID);
+      } else {
+        movie.Poster = '';
+      }
+      const card = createMovieCard(movie);
+      grid.appendChild(card);
+    }
+  } catch (error) {
+    console.error('Failed to load popular movies:', error);
+  }
 }
 
-// enable swipe
-function addSwipe(id){
-  const slider=document.getElementById(id);
-  let isDown=false,startX,scrollLeft;
-  slider.addEventListener("pointerdown",e=>{isDown=true;startX=e.pageX-slider.offsetLeft;scrollLeft=slider.scrollLeft});
-  slider.addEventListener("pointerleave",()=>isDown=false);
-  slider.addEventListener("pointerup",()=>isDown=false);
-  slider.addEventListener("pointermove",e=>{
-    if(!isDown)return;
-    e.preventDefault();
-    slider.scrollLeft=scrollLeft-(e.pageX-startX)*2;
-  });
-}
+document.addEventListener('DOMContentLoaded', () => {
+  renderMostPopularMovies();
+});
+</script>
 
-async function initMovies(){
-  const [trendingMovies,top10Movies]=await Promise.all([
-    fetchMovies(trendingTitles),
-    fetchMovies(top10Titles)
-  ]);
-  renderCarousel(trendingMovies,"trending", "movie");
-  renderCarousel(top10Movies,"top10", "movie");
-  renderCarousel(myList,"mylist", "series");
-  ["trending","top10","mylist"].forEach(addSwipe);
-}
-initMovies();
-
-// search
+<script>
 document.getElementById("search").addEventListener("input",function(e){
   const q=e.target.value.trim();
   let dropdown = document.querySelector('.dropdown');
@@ -311,31 +343,80 @@ document.getElementById("search").addEventListener("keypress",async function(e){
     }
   }
 });
+</script>
 
-// Video provider configuration
-const videoProviders = [
-  { name: 'VidSrc.cc', domain: 'vidsrc.cc' },
-  { name: 'VidRock.net', domain: 'vidrock.net' },
-  { name: 'VidSrc.me', domain: 'vidsrc.me' },
-  { name: 'VidFast.pro', domain: 'vidfast.pro' }
-];
+<!-- Video Provider Modal -->
+<div id="videoModal" class="video-modal">
+  <div class="video-modal-content">
+    <div class="video-modal-header">
+      <h3 id="modalTitle">Select Video Provider</h3>
+      <span class="close-modal" id="closeModal">&times;</span>
+    </div>
+    <div id="providerGrid" class="provider-grid">
+      <!-- Provider buttons will be added here by JavaScript -->
+    </div>
+    <div id="videoContainer" class="video-container">
+      <iframe id="videoIframe" class="video-iframe" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
 
-// Generate embed URL for a provider
-function generateEmbedUrl(provider, imdbId, type) {
-  const baseUrls = {
-    'vidsrc.cc': type === 'series'
-      ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/1?ads=0&disable_ads=1`
-      : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
-    'vidrock.net': type === 'series'
-      ? `https://vidrock.net/tv/${imdbId}/1/1?ads=0&disable_ads=1`
-      : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
-    'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
-    'vidfast.pro': type === 'series'
-      ? `https://vidfast.pro/tv/${imdbId}/1/1?autoPlay=true&ads=0&disable_ads=1`
-      : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`
-  };
+<script defer>
+// fetch movies in parallel
+async function fetchMovies(titles){
+  try{
+    console.log('Fetching movies for titles:', titles);
+    const results=await Promise.all(titles.map(title=>
+      fetch(`${WORKER_URL}/api/movie?t=${encodeURIComponent(title)}`).then(r=>r.json())
+    ));
+    console.log('Fetched results:', results);
+    const filtered = results.filter(m=>m.Response==="True").map(m=>({
+      title:m.Title,imdb:m.imdbID,poster:m.Poster,plot:m.Plot, year: m.Year
+    }));
+    console.log('Filtered movies:', filtered);
+    return filtered;
+  }catch(e){console.error(e);return []}
+}
 
-  return baseUrls[provider] || '';
+// render carousel for mobile
+function renderCarousel(movies,containerId, type = "movie"){
+  console.log('Rendering movies for', containerId, ':', movies);
+  const container=document.getElementById(containerId);
+  container.innerHTML=movies.map(movie=>`
+    <div class="movie-card" data-imdb="${movie.imdb}">
+      <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
+      <div class="movie-title">${movie.title}</div>
+    </div>
+  `).join("");
+
+  container.querySelectorAll(".movie-card").forEach(card=>{
+    card.onclick=async ()=>{
+      try {
+        const imdb = card.dataset.imdb;
+        const title = card.querySelector('.movie-title').textContent;
+
+        // Show provider selection modal instead of opening directly
+        showVideoModal(title, imdb, type);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load video options");
+      }
+    };
+  });
+}
+
+// enable swipe
+function addSwipe(id){
+  const slider=document.getElementById(id);
+  let isDown=false,startX,scrollLeft;
+  slider.addEventListener("pointerdown",e=>{isDown=true;startX=e.pageX-slider.offsetLeft;scrollLeft=slider.scrollLeft});
+  slider.addEventListener("pointerleave",()=>isDown=false);
+  slider.addEventListener("pointerup",()=>isDown=false);
+  slider.addEventListener("pointermove",e=>{
+    if(!isDown)return;
+    e.preventDefault();
+    slider.scrollLeft=scrollLeft-(e.pageX-startX)*2;
+  });
 }
 
 // Show video provider modal
@@ -432,6 +513,32 @@ document.addEventListener('click', async function(e){
     dropdown.style.display = 'none';
   }
 });
+
+// Video provider configuration
+const videoProviders = [
+  { name: 'VidSrc.cc', domain: 'vidsrc.cc' },
+  { name: 'VidRock.net', domain: 'vidrock.net' },
+  { name: 'VidSrc.me', domain: 'vidsrc.me' },
+  { name: 'VidFast.pro', domain: 'vidfast.pro' }
+];
+
+// Generate embed URL for a provider
+function generateEmbedUrl(provider, imdbId, type) {
+  const baseUrls = {
+    'vidsrc.cc': type === 'series'
+      ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/1?ads=0&disable_ads=1`
+      : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
+    'vidrock.net': type === 'series'
+      ? `https://vidrock.net/tv/${imdbId}/1/1?ads=0&disable_ads=1`
+      : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
+    'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
+    'vidfast.pro': type === 'series'
+      ? `https://vidfast.pro/tv/${imdbId}/1/1?autoPlay=true&ads=0&disable_ads=1`
+      : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`
+  };
+
+  return baseUrls[provider] || '';
+}
 </script>
 </body>
 </html>
