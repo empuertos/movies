@@ -228,33 +228,54 @@ async function fetchPoster(imdbID) {
     return '';
   }
   const validImdbID = validImdbIdMatch[0];
-  const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev/api/movie?i=${validImdbID}`;
+
   try {
+    // Try the original worker API first
     console.log('Fetching poster for IMDb ID:', validImdbID);
+    const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev?movie=${validImdbID}`;
     const response = await fetch(apiUrl);
-    if (!response.ok) {
-      console.error('API response not ok for', validImdbID, response.status);
-      return '';
+
+    if (response.ok) {
+      const text = await response.text();
+      console.log('Raw API response text for', validImdbID, text);
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON for', validImdbID, parseError);
+        throw new Error('JSON parse failed');
+      }
+
+      if (data && data.Poster && data.Poster !== "N/A") {
+        console.log('Poster found:', data.Poster);
+        return data.Poster;
+      }
     }
-    const text = await response.text();
-    console.log('Raw API response text for', validImdbID, text);
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error('Failed to parse JSON for', validImdbID, parseError);
-      return '';
+
+    // If original API fails, try TMDB API as fallback
+    console.log('Trying TMDB API as fallback for', validImdbID);
+    const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb'; // TMDB API key
+    const tmdbUrl = `https://api.themoviedb.org/3/find/${validImdbID}?api_key=${tmdbApiKey}&external_source=imdb_id`;
+
+    const tmdbResponse = await fetch(tmdbUrl);
+    if (tmdbResponse.ok) {
+      const tmdbData = await tmdbResponse.json();
+      if (tmdbData.movie_results && tmdbData.movie_results.length > 0) {
+        const movie = tmdbData.movie_results[0];
+        if (movie.poster_path) {
+          const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+          console.log('TMDB poster found:', posterUrl);
+          return posterUrl;
+        }
+      }
     }
-    console.log('Poster data received for', validImdbID, data);
-    if (data && data.Poster && data.Poster !== "N/A") {
-      return data.Poster;
-    } else {
-      console.warn('No valid poster found for', validImdbID);
-    }
+
+    console.warn('No poster found for', validImdbID);
+    return '';
   } catch (error) {
     console.error('Failed to fetch poster for', validImdbID, error);
+    return '';
   }
-  return '';
 }
 
 async function renderMostPopularMovies() {
@@ -302,7 +323,7 @@ document.getElementById("search").addEventListener("input",function(e){
     dropdown.style.display = 'none';
     return;
   }
-  fetch(`${WORKER_URL}/api/search?s=${encodeURIComponent(q)}`)
+  fetch(`${WORKER_URL}?movie=${encodeURIComponent(q)}`)
     .then(r=>r.json())
     .then(d=>{
       const results = d.Search || [];
@@ -321,7 +342,7 @@ document.getElementById("search").addEventListener("keypress",async function(e){
     const q=e.target.value.trim();
     if(!q)return;
     try {
-      const res = await fetch(`${WORKER_URL}/api/search?s=${encodeURIComponent(q)}`);
+      const res = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(q)}`);
       const d = await res.json();
       if(d.Search && d.Search.length > 0){
         // Determine if first result is movie or series and show provider selection
@@ -367,7 +388,7 @@ async function fetchMovies(titles){
   try{
     console.log('Fetching movies for titles:', titles);
     const results=await Promise.all(titles.map(title=>
-      fetch(`${WORKER_URL}/api/movie?t=${encodeURIComponent(title)}`).then(r=>r.json())
+      fetch(`${WORKER_URL}?movie=${encodeURIComponent(title)}`).then(r=>r.json())
     ));
     console.log('Fetched results:', results);
     const filtered = results.filter(m=>m.Response==="True").map(m=>({
