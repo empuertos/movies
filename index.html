@@ -13,6 +13,8 @@ input[type="text"]{padding:6px;font-size:14px;width:150px;border-radius:4px;bord
 .dropdown{position:absolute;top:100%;left:0;right:0;background:#333;border:1px solid #555;max-height:200px;overflow-y:auto;z-index:1000;display:none}
 .dropdown-item{padding:8px;cursor:pointer;border-bottom:1px solid #444}
 .dropdown-item:hover{background:#555}
+.dropdown-item.selected{background:#e50914;color:#fff}
+.dropdown-item mark{background:#ff6b35;color:#fff;padding:1px 2px;border-radius:2px}
 section{margin-top:15px}
 h2{margin-left:10px;font-size:16px}
 .carousel-wrapper{position:relative}
@@ -311,42 +313,407 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-document.getElementById("search").addEventListener("input",function(e){
-  const q=e.target.value.trim();
-  let dropdown = document.querySelector('.dropdown');
-  if (!dropdown) {
-    dropdown = document.createElement('div');
-    dropdown.className = 'dropdown';
-    document.querySelector('.search-container').appendChild(dropdown);
-  }
-  if(!q || q.length < 2){
-    dropdown.style.display = 'none';
-    return;
-  }
-  fetch(`${WORKER_URL}?movie=${encodeURIComponent(q)}`)
-    .then(r=>r.json())
-    .then(d=>{
-      const results = d.Search || [];
-      if(results.length === 0){
-        dropdown.style.display = 'none';
-        return;
-      }
-      dropdown.innerHTML = results.slice(0,5).map(r=>`<div class="dropdown-item" data-imdb="${r.imdbID}" data-type="${r.Type}">${r.Title} (${r.Year}) - ${r.Type}</div>`).join('');
-      dropdown.style.display = 'block';
-    })
-    .catch(console.error);
-});
+// Enhanced search functionality with debouncing, caching, and keyboard navigation
+class SearchManager {
+  constructor() {
+    this.searchInput = document.getElementById('search');
+    this.dropdown = null;
+    this.debounceTimer = null;
+    this.cache = new Map();
+    this.selectedIndex = -1;
+    this.searchResults = [];
+    this.isLoading = false;
 
-document.getElementById("search").addEventListener("keypress",async function(e){
-  if(e.key==="Enter"){
-    const q=e.target.value.trim();
-    if(!q)return;
+    this.init();
+  }
+
+  init() {
+    this.createDropdown();
+    this.bindEvents();
+  }
+
+  createDropdown() {
+    if (this.dropdown) return;
+
+    this.dropdown = document.createElement('div');
+    this.dropdown.className = 'dropdown';
+    this.dropdown.setAttribute('role', 'listbox');
+    this.dropdown.setAttribute('aria-label', 'Search results');
+    this.dropdown.style.display = 'none';
+
+    const searchContainer = document.querySelector('.search-container');
+    searchContainer.appendChild(this.dropdown);
+  }
+
+  bindEvents() {
+    // Debounced input handler
+    this.searchInput.addEventListener('input', (e) => {
+      this.handleInput(e.target.value);
+    });
+
+    // Keyboard navigation
+    this.searchInput.addEventListener('keydown', (e) => {
+      this.handleKeydown(e);
+    });
+
+    // Focus/blur handlers
+    this.searchInput.addEventListener('focus', () => {
+      if (this.searchResults.length > 0) {
+        this.showDropdown();
+      }
+    });
+
+    this.searchInput.addEventListener('blur', () => {
+      // Delay hiding to allow dropdown clicks
+      setTimeout(() => {
+        if (!this.dropdown.contains(document.activeElement)) {
+          this.hideDropdown();
+        }
+      }, 150);
+    });
+
+    // Dropdown click handler
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('dropdown-item')) {
+        this.handleDropdownItemClick(e.target);
+      } else if (!document.querySelector('.search-container').contains(e.target)) {
+        this.hideDropdown();
+      }
+    });
+  }
+
+  handleInput(value) {
+    const query = value.trim();
+
+    // Clear previous timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    // Hide dropdown for short queries or empty input
+    if (!query || query.length < 2) {
+      this.hideDropdown();
+      this.isLoading = false;
+      return;
+    }
+
+    // Show loading state
+    this.showLoadingState();
+
+    // Debounce search requests
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(query);
+    }, 300);
+  }
+
+  async performSearch(query) {
+    // Check cache first
+    if (this.cache.has(query)) {
+      this.displayResults(this.cache.get(query));
+      return;
+    }
+
+    this.isLoading = true;
+
     try {
-      const res = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(q)}`);
-      const d = await res.json();
-      if(d.Search && d.Search.length > 0){
-        // Determine if first result is movie or series and show provider selection
-        const first = d.Search[0];
+      console.log('Searching for:', query);
+
+      // Step 1: Try TMDB API first (more reliable for finding titles)
+      const tmdbResults = await this.searchTMDB(query);
+
+      if (tmdbResults.length > 0) {
+        // Step 2: For each TMDB result, get detailed info from OMDB/IMDb API
+        const detailedResults = await this.getDetailedMovieInfo(tmdbResults);
+        this.cache.set(query, detailedResults);
+        this.displayResults(detailedResults);
+      } else {
+        // Step 3: Try the original worker API as fallback
+        const workerResults = await this.searchWorkerAPI(query);
+        if (workerResults.length > 0) {
+          this.cache.set(query, workerResults);
+          this.displayResults(workerResults);
+        } else {
+          this.showNoResults();
+        }
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      this.showErrorState(`Search failed: ${error.message}`);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async searchTMDB(query) {
+    try {
+      const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb';
+      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
+
+      const response = await fetch(tmdbUrl);
+      if (!response.ok) {
+        throw new Error(`TMDB API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('TMDB search results:', data);
+
+      if (data.results && data.results.length > 0) {
+        return data.results.slice(0, 5).map(movie => ({
+          Title: movie.title,
+          Year: movie.release_date ? movie.release_date.substring(0, 4) : '',
+          imdbID: movie.id.toString(),
+          Type: 'movie',
+          Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '',
+          tmdbData: movie // Store full TMDB data for later use
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('TMDB search failed:', error);
+      return [];
+    }
+  }
+
+  async getDetailedMovieInfo(tmdbResults) {
+    const detailedResults = [];
+
+    for (const movie of tmdbResults) {
+      try {
+        // Try to get detailed info from the worker API using the movie title
+        const workerResponse = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(movie.Title)}`);
+
+        if (workerResponse.ok) {
+          const workerData = await workerResponse.json();
+          console.log('Worker API detailed data:', workerData);
+
+          if (workerData.Response === "True") {
+            // Use the detailed data from worker API
+            detailedResults.push({
+              Title: workerData.Title,
+              Year: workerData.Year,
+              imdbID: workerData.imdbID,
+              Type: workerData.Type,
+              Poster: workerData.Poster !== "N/A" ? workerData.Poster : movie.Poster,
+              Plot: workerData.Plot,
+              Genre: workerData.Genre,
+              Director: workerData.Director,
+              Actors: workerData.Actors
+            });
+          } else {
+            // Fallback to TMDB data
+            detailedResults.push(movie);
+          }
+        } else {
+          // Use TMDB data as fallback
+          detailedResults.push(movie);
+        }
+      } catch (error) {
+        console.error('Failed to get detailed info for:', movie.Title, error);
+        detailedResults.push(movie);
+      }
+    }
+
+    return detailedResults;
+  }
+
+  async searchWorkerAPI(query) {
+    try {
+      const response = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(query)}`);
+
+      if (!response.ok) {
+        throw new Error(`Worker API error: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Worker API raw response:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse Worker API JSON:', parseError);
+        return [];
+      }
+
+      console.log('Worker API parsed response:', data);
+
+      // Handle different response formats
+      if (data.Search && Array.isArray(data.Search)) {
+        return data.Search.slice(0, 5);
+      } else if (data.Response === "True" && data.Title) {
+        return [data];
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Worker API search failed:', error);
+      return [];
+    }
+  }
+
+  async performFallbackSearch(query) {
+    try {
+      console.log('Attempting fallback search for:', query);
+
+      // Use TMDB API as fallback
+      const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb';
+      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
+
+      const response = await fetch(tmdbUrl);
+      if (!response.ok) {
+        throw new Error(`TMDB API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('TMDB fallback response:', data);
+
+      if (data.results && data.results.length > 0) {
+        // Convert TMDB results to expected format
+        const results = data.results.slice(0, 5).map(movie => ({
+          Title: movie.title,
+          Year: movie.release_date ? movie.release_date.substring(0, 4) : '',
+          imdbID: movie.id.toString(),
+          Type: 'movie',
+          Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ''
+        }));
+
+        // Cache the results
+        this.cache.set(query, results);
+        this.displayResults(results);
+      } else {
+        this.showNoResults();
+      }
+    } catch (fallbackError) {
+      console.error('Fallback search failed:', fallbackError);
+      this.showErrorState('Search failed. Please check your connection and try again.');
+    }
+  }
+
+  displayResults(results) {
+    this.searchResults = results.slice(0, 5); // Limit to 5 results
+    this.selectedIndex = -1;
+
+    if (this.searchResults.length === 0) {
+      this.showNoResults();
+      return;
+    }
+
+    this.dropdown.innerHTML = this.searchResults.map((result, index) =>
+      `<div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
+        <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
+      </div>`
+    ).join('');
+
+    this.showDropdown();
+  }
+
+  highlightQuery(text) {
+    const query = this.searchInput.value.trim();
+    if (!query || query.length < 2) return text;
+
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+  }
+
+  showLoadingState() {
+    this.dropdown.innerHTML = '<div class="dropdown-item" style="text-align: center; color: #999;">Searching...</div>';
+    this.dropdown.style.display = 'block';
+  }
+
+  showErrorState(message) {
+    this.dropdown.innerHTML = `<div class="dropdown-item" style="text-align: center; color: #e50914;">${message}</div>`;
+    this.dropdown.style.display = 'block';
+  }
+
+  showNoResults() {
+    const query = this.searchInput.value.trim();
+    this.dropdown.innerHTML = `<div class="dropdown-item" style="text-align: center; color: #999;">No results for "${query}"</div>`;
+    this.dropdown.style.display = 'block';
+  }
+
+  showDropdown() {
+    this.dropdown.style.display = 'block';
+    this.searchInput.setAttribute('aria-expanded', 'true');
+  }
+
+  hideDropdown() {
+    this.dropdown.style.display = 'none';
+    this.searchInput.setAttribute('aria-expanded', 'false');
+    this.selectedIndex = -1;
+  }
+
+  handleKeydown(e) {
+    if (this.searchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this.selectedIndex = Math.min(this.selectedIndex + 1, this.searchResults.length - 1);
+        this.updateSelection();
+        break;
+
+      case 'ArrowUp':
+        e.preventDefault();
+        this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+        this.updateSelection();
+        break;
+
+      case 'Enter':
+        e.preventDefault();
+        if (this.selectedIndex >= 0) {
+          const selectedItem = this.dropdown.querySelector(`[data-index="${this.selectedIndex}"]`);
+          this.handleDropdownItemClick(selectedItem);
+        } else {
+          // Perform search with current input
+          this.handleEnterKey();
+        }
+        break;
+
+      case 'Escape':
+        e.preventDefault();
+        this.hideDropdown();
+        this.searchInput.blur();
+        break;
+    }
+  }
+
+  updateSelection() {
+    const items = this.dropdown.querySelectorAll('.dropdown-item');
+
+    items.forEach((item, index) => {
+      if (index === this.selectedIndex) {
+        item.classList.add('selected');
+        item.setAttribute('aria-selected', 'true');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('selected');
+        item.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+
+  handleDropdownItemClick(item) {
+    const imdb = item.dataset.imdb;
+    const type = item.dataset.type;
+    const title = item.textContent.split(' (')[0].replace(/<[^>]*>/g, ''); // Extract title and remove HTML tags
+
+    // Show provider selection modal directly
+    showVideoModal(title, imdb, type);
+
+    this.hideDropdown();
+    this.searchInput.value = '';
+  }
+
+  async handleEnterKey() {
+    const query = this.searchInput.value.trim();
+    if (!query) return;
+
+    try {
+      const response = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (data.Search && data.Search.length > 0) {
+        const first = data.Search[0];
         const type = first.Type === "series" ? "series" : "movie";
         const title = first.Title;
 
@@ -354,15 +721,31 @@ document.getElementById("search").addEventListener("keypress",async function(e){
         showVideoModal(title, first.imdbID, type);
 
         // Clear search input
-        document.getElementById('search').value = '';
+        this.searchInput.value = '';
+        this.hideDropdown();
       } else {
-        alert("Movie not found!");
+        this.showErrorState("Movie not found!");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Search failed");
+    } catch (error) {
+      console.error('Enter key search error:', error);
+      this.showErrorState("Search failed. Please try again.");
     }
   }
+
+  // Cleanup method
+  destroy() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+    if (this.dropdown && this.dropdown.parentNode) {
+      this.dropdown.parentNode.removeChild(this.dropdown);
+    }
+  }
+}
+
+// Initialize search manager when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  window.searchManager = new SearchManager();
 });
 </script>
 
