@@ -256,45 +256,56 @@ async function fetchPoster(imdbID) {
 
     // If original API fails, try TMDB API as fallback
     console.log('Trying TMDB API as fallback for', validImdbID);
-    const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb'; // TMDB API key
-    const tmdbUrl = `https://api.themoviedb.org/3/find/${validImdbID}?api_key=${tmdbApiKey}&external_source=imdb_id`;
 
-    const tmdbResponse = await fetch(tmdbUrl);
-    if (tmdbResponse.ok) {
-      const tmdbData = await tmdbResponse.json();
-      if (tmdbData.movie_results && tmdbData.movie_results.length > 0) {
-        const movie = tmdbData.movie_results[0];
-        if (movie.poster_path) {
-          const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
-          console.log('TMDB poster found:', posterUrl);
-          return posterUrl;
+    try {
+      const apiKeyResponse = await fetch('/api/tmdb-key');
+      const tmdbApiKey = await apiKeyResponse.text();
+      const tmdbUrl = `https://api.themoviedb.org/3/find/${validImdbID}?api_key=${tmdbApiKey}&external_source=imdb_id`;
+
+      const tmdbResponse = await fetch(tmdbUrl);
+      if (tmdbResponse.ok) {
+        const tmdbData = await tmdbResponse.json();
+        if (tmdbData.movie_results && tmdbData.movie_results.length > 0) {
+          const movie = tmdbData.movie_results[0];
+          if (movie.poster_path) {
+            const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+            console.log('TMDB poster found:', posterUrl);
+            return posterUrl;
+          }
         }
       }
+    } catch (error) {
+      console.error('TMDB fetch failed for', validImdbID, error);
     }
 
     console.warn('No poster found for', validImdbID);
     return '';
-  } catch (error) {
-    console.error('Failed to fetch poster for', validImdbID, error);
-    return '';
-  }
 }
 
 async function renderMostPopularMovies() {
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy8FBC-tlZoaaP1mVzAgxTy-817j3ViS_h9dM8rz0VOEkUqVj77vGVrjNneAYQbkP9R48dGMnGIPX4/pub?gid=0&single=true&output=csv';
   try {
+    console.log('Fetching CSV from:', csvUrl);
     const csvText = await fetchCSV(csvUrl);
+    console.log('CSV text received:', csvText);
     const movies = parseCSV(csvText);
+    console.log('Parsed movies:', movies);
     const grid = document.getElementById('popularMoviesGrid');
+    if (!grid) {
+      console.error('Grid element not found');
+      return;
+    }
     for (const movie of movies) {
+      console.log('Processing movie:', movie);
       // Extract IMDb ID from IMDb URL
       let imdbID = '';
       if (movie['IMDb URL']) {
-      // Fix regex to correctly extract IMDb ID (tt followed by 7 or 8 digits)
-      const match = movie['IMDb URL'].match(/tt\d{7,8}/);
-      if (match) imdbID = match[0];
+        // Fix regex to correctly extract IMDb ID (tt followed by 7 or 8 digits)
+        const match = movie['IMDb URL'].match(/tt\d{7,8}/);
+        if (match) imdbID = match[0];
       }
       if (imdbID) {
+        console.log('Fetching poster for:', imdbID);
         movie.Poster = await fetchPoster(imdbID);
       } else {
         movie.Poster = '';
@@ -302,8 +313,14 @@ async function renderMostPopularMovies() {
       const card = createMovieCard(movie);
       grid.appendChild(card);
     }
+    console.log('Movies rendered successfully');
   } catch (error) {
     console.error('Failed to load popular movies:', error);
+    // Add a fallback message
+    const grid = document.getElementById('popularMoviesGrid');
+    if (grid) {
+      grid.innerHTML = '<p style="color: red;">Failed to load movies. Check console for errors.</p>';
+    }
   }
 }
 
@@ -446,7 +463,8 @@ class SearchManager {
 
   async searchTMDB(query) {
     try {
-      const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb';
+      const apiKeyResponse = await fetch('/api/tmdb-key');
+      const tmdbApiKey = await apiKeyResponse.text();
       const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
 
       const response = await fetch(tmdbUrl);
@@ -556,7 +574,8 @@ class SearchManager {
       console.log('Attempting fallback search for:', query);
 
       // Use TMDB API as fallback
-      const tmdbApiKey = '15d2ea6d0dc1d476efbca3eba2b9bbfb';
+      const apiKeyResponse = await fetch('/api/tmdb-key');
+      const tmdbApiKey = await apiKeyResponse.text();
       const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
 
       const response = await fetch(tmdbUrl);
@@ -841,13 +860,29 @@ function showVideoModal(title, imdbId, type) {
   videoContainer.style.display = 'none';
   videoIframe.src = '';
 
+  // Add season and episode inputs for TV series
+  if (type === 'series') {
+    const seasonEpisodeDiv = document.createElement('div');
+    seasonEpisodeDiv.innerHTML = `
+      <label for="seasonInput">Season:</label>
+      <input type="number" id="seasonInput" min="1" value="1" style="margin: 0 10px;">
+      <label for="episodeInput">Episode:</label>
+      <input type="number" id="episodeInput" min="1" value="1" style="margin: 0 10px;">
+    `;
+    providerGrid.appendChild(seasonEpisodeDiv);
+  }
+
   // Add provider buttons
   videoProviders.forEach(provider => {
     const button = document.createElement('button');
     button.className = 'provider-btn';
     button.textContent = provider.name;
     button.dataset.provider = provider.domain;
-    button.onclick = () => selectProvider(provider.domain, imdbId, type, title);
+    button.onclick = () => {
+      const season = type === 'series' ? document.getElementById('seasonInput').value : 1;
+      const episode = type === 'series' ? document.getElementById('episodeInput').value : 1;
+      selectProvider(provider.domain, imdbId, type, title, season, episode);
+    };
     providerGrid.appendChild(button);
   });
 
@@ -856,8 +891,8 @@ function showVideoModal(title, imdbId, type) {
 }
 
 // Select video provider and load video
-function selectProvider(provider, imdbId, type, title) {
-  const embedUrl = generateEmbedUrl(provider, imdbId, type);
+function selectProvider(provider, imdbId, type, title, season = 1, episode = 1) {
+  const embedUrl = generateEmbedUrl(provider, imdbId, type, season, episode);
 
   if (embedUrl) {
     // Close the modal
@@ -923,22 +958,46 @@ const videoProviders = [
   { name: 'VidSrc.cc', domain: 'vidsrc.cc' },
   { name: 'VidRock.net', domain: 'vidrock.net' },
   { name: 'VidSrc.me', domain: 'vidsrc.me' },
-  { name: 'VidFast.pro', domain: 'vidfast.pro' }
+  { name: 'VidFast.pro', domain: 'vidfast.pro' },
+  { name: 'AutoEmbed.cc', domain: 'autoembed.cc' },
+  { name: 'Embed.su', domain: 'embed.su' },
+  { name: '111Movies.com', domain: '111movies.com' },
+  { name: 'VidLink.pro', domain: 'vidlink.pro' },
+  { name: 'Player.Videasy.net', domain: 'player.videasy.net' }
 ];
 
 // Generate embed URL for a provider
-function generateEmbedUrl(provider, imdbId, type) {
+function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
   const baseUrls = {
     'vidsrc.cc': type === 'series'
-      ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/1?ads=0&disable_ads=1`
+      ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}?ads=0&disable_ads=1`
       : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
     'vidrock.net': type === 'series'
-      ? `https://vidrock.net/tv/${imdbId}/1/1?ads=0&disable_ads=1`
+      ? `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`
       : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
     'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
     'vidfast.pro': type === 'series'
-      ? `https://vidfast.pro/tv/${imdbId}/1/1?autoPlay=true&ads=0&disable_ads=1`
-      : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`
+      ? `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`
+      : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`,
+    'autoembed.cc': type === 'series'
+      ? `https://player.autoembed.cc/embed/tv/${imdbId}/${season}/${episode}`
+      : `https://player.autoembed.cc/embed/movie/${imdbId}`,
+    'embed.su': type === 'series'
+      ? `https://embed.su/embed/tv/${imdbId}/${season}/${episode}`
+      : `https://embed.su/embed/movie/${imdbId}`,
+    '111movies.com': type === 'series'
+      ? `https://111movies.com/tv/${imdbId}/${season}/${episode}`
+      : `https://111movies.com/movie/${imdbId}`,
+    'vidlink.pro': type === 'series'
+      ? `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`
+      : type === 'anime'
+      ? `https://vidlink.pro/anime/${imdbId}/${episode}/sub?fallback=true`
+      : `https://vidlink.pro/movie/${imdbId}`,
+    'player.videasy.net': type === 'series'
+      ? `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`
+      : type === 'anime'
+      ? `https://player.videasy.net/anime/${imdbId}/${episode}?dub=false`
+      : `https://player.videasy.net/movie/${imdbId}`
   };
 
   return baseUrls[provider] || '';
