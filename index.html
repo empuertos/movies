@@ -844,11 +844,17 @@ function addSwipe(id){
 
 // Show video provider modal
 function showVideoModal(title, imdbId, type) {
+  console.log('showVideoModal called with:', title, imdbId, type);
   const modal = document.getElementById('videoModal');
   const modalTitle = document.getElementById('modalTitle');
   const providerGrid = document.getElementById('providerGrid');
   const videoContainer = document.getElementById('videoContainer');
   const videoIframe = document.getElementById('videoIframe');
+
+  if (!modal || !modalTitle || !providerGrid) {
+    console.error('Modal elements not found');
+    return;
+  }
 
   // Set modal title
   modalTitle.textContent = `Select ${type === 'series' ? 'Episode' : 'Video'} Provider for ${title}`;
@@ -885,9 +891,11 @@ function showVideoModal(title, imdbId, type) {
     };
     providerGrid.appendChild(button);
   });
+  console.log('Provider buttons added');
 
   // Show modal
   modal.style.display = 'block';
+  console.log('Modal displayed');
 }
 
 // Select video provider and load video
