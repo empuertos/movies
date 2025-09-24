@@ -984,7 +984,8 @@ const videoProviders = [
   { name: 'Embed.su', domain: 'embed.su' },
   { name: '111Movies.com', domain: '111movies.com' },
   { name: 'VidLink.pro', domain: 'vidlink.pro' },
-  { name: 'Player.Videasy.net', domain: 'player.videasy.net' }
+  { name: 'Player.Videasy.net', domain: 'player.videasy.net' },
+  { name: 'VidSrc.to', domain: 'vidsrc.to' }
 ];
 
 // Generate embed URL for a provider
@@ -1018,7 +1019,10 @@ function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
       ? `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`
       : type === 'anime'
       ? `https://player.videasy.net/anime/${imdbId}/${episode}?dub=false`
-      : `https://player.videasy.net/movie/${imdbId}`
+      : `https://player.videasy.net/movie/${imdbId}`,
+    'vidsrc.to': type === 'series'
+      ? `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`
+      : `https://vidsrc.to/embed/movie/${imdbId}`
   };
 
   return baseUrls[provider] || '';
