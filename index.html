@@ -78,6 +78,8 @@ h2{margin-left:10px;font-size:16px}
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .provider-btn {
@@ -280,6 +282,10 @@ async function fetchPoster(imdbID) {
 
     console.warn('No poster found for', validImdbID);
     return '';
+  } catch (error) {
+    console.error('Error in fetchPoster for', imdbID, error);
+    return '';
+  }
 }
 
 async function renderMostPopularMovies() {
@@ -878,18 +884,25 @@ function showVideoModal(title, imdbId, type) {
     providerGrid.appendChild(seasonEpisodeDiv);
   }
 
-  // Add provider buttons
+  // Add provider buttons with debugging and error handling
+  console.log('videoProviders array:', videoProviders);
   videoProviders.forEach(provider => {
-    const button = document.createElement('button');
-    button.className = 'provider-btn';
-    button.textContent = provider.name;
-    button.dataset.provider = provider.domain;
-    button.onclick = () => {
-      const season = type === 'series' ? document.getElementById('seasonInput').value : 1;
-      const episode = type === 'series' ? document.getElementById('episodeInput').value : 1;
-      selectProvider(provider.domain, imdbId, type, title, season, episode);
-    };
-    providerGrid.appendChild(button);
+    try {
+      console.log('Creating button for provider:', provider.name);
+      const button = document.createElement('button');
+      button.className = 'provider-btn';
+      button.textContent = provider.name;
+      button.dataset.provider = provider.domain;
+      button.onclick = () => {
+        const season = type === 'series' ? document.getElementById('seasonInput').value : 1;
+        const episode = type === 'series' ? document.getElementById('episodeInput').value : 1;
+        selectProvider(provider.domain, imdbId, type, title, season, episode);
+      };
+      providerGrid.appendChild(button);
+      console.log('Button added for:', provider.name);
+    } catch (error) {
+      console.error('Error creating button for provider:', provider.name, error);
+    }
   });
   console.log('Provider buttons added');
 
