@@ -248,32 +248,8 @@ async function fetchPoster(imdbID) {
   const validImdbID = validImdbIdMatch[0];
 
   try {
-    // Try TMDB API first for poster
-    console.log('Trying TMDB API for poster for IMDb ID:', validImdbID);
-
-    try {
-      const apiKeyResponse = await fetch('/api/tmdb-key');
-      const tmdbApiKey = await apiKeyResponse.text();
-      const tmdbUrl = `https://api.themoviedb.org/3/find/${validImdbID}?api_key=${tmdbApiKey}&external_source=imdb_id`;
-
-      const tmdbResponse = await fetch(tmdbUrl);
-      if (tmdbResponse.ok) {
-        const tmdbData = await tmdbResponse.json();
-        if (tmdbData.movie_results && tmdbData.movie_results.length > 0) {
-          const movie = tmdbData.movie_results[0];
-          if (movie.poster_path) {
-            const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
-            console.log('TMDB poster found:', posterUrl);
-            return posterUrl;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('TMDB fetch failed for', validImdbID, error);
-    }
-
-    // If TMDB fails, try the OMDB worker API as fallback
-    console.log('Trying OMDB worker API as fallback for IMDb ID:', validImdbID);
+    // Use OMDB worker API for poster
+    console.log('Fetching poster from OMDB worker API for IMDb ID:', validImdbID);
     const apiUrl = `${OMDB_WORKER_URL}?movie=${validImdbID}`;
     const response = await fetch(apiUrl);
 
@@ -1029,6 +1005,55 @@ document.addEventListener('click', async function (e) {
     dropdown.style.display = 'none';
   }
 });
+
+// Generate embed URL for video provider
+function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
+  try {
+    let embedUrl = '';
+
+    switch (provider) {
+      case 'autoembed.cc':
+        embedUrl = `https://player.autoembed.cc/embed/movie/${imdbId}`;
+        break;
+      case 'embed.su':
+        embedUrl = `https://embed.su/embed/movie/${imdbId}`;
+        break;
+      case '111movies.com':
+        embedUrl = `https://111movies.com/embed/movie/${imdbId}`;
+        break;
+      case 'vidlink.pro':
+        embedUrl = `https://vidlink.pro/movie/${imdbId}`;
+        break;
+      case 'player.videasy.net':
+        embedUrl = `https://player.videasy.net/movie/${imdbId}`;
+        break;
+      case 'vidsrc.to':
+        embedUrl = `https://vidsrc.to/embed/movie/${imdbId}`;
+        break;
+      case 'vidsrc.cc':
+        embedUrl = `https://vidsrc.cc/v2/embed/movie/${imdbId}`;
+        break;
+      case 'vidrock.net':
+        embedUrl = `https://vidrock.net/embed/movie/${imdbId}`;
+        break;
+      case 'vidsrc.me':
+        embedUrl = `https://vidsrc.me/embed/movie/${imdbId}`;
+        break;
+      case 'vidfast.pro':
+        embedUrl = `https://vidfast.pro/embed/movie/${imdbId}`;
+        break;
+      default:
+        console.error('Unknown provider:', provider);
+        return null;
+    }
+
+    console.log(`Generated embed URL for ${provider}: ${embedUrl}`);
+    return embedUrl;
+  } catch (error) {
+    console.error('Error generating embed URL:', error);
+    return null;
+  }
+}
 
 // Video provider configuration
 const videoProviders = [
