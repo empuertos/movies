@@ -194,7 +194,7 @@ function createMovieCard(movie) {
 
   const img = document.createElement('img');
   console.log('Setting poster URL for movie:', movie['Movie Title'], posterUrl);
-  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg';
+  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg';
   img.alt = movie['Movie Title'] || 'Movie Poster';
   img.style.width = '100%';
   img.style.borderRadius = '6px';
@@ -630,7 +630,7 @@ class SearchManager {
 
     this.dropdown.innerHTML = this.searchResults.map((result, index) =>
       `<div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
-        <img src="${result.Poster || 'https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg'}" alt="${result.Title}" onerror="this.onerror=null;this.src='https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg';">
+        <img src="${result.Poster || 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'}" alt="${result.Title}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9Ijc1IiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjUiIHk9IjM3LjUiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTAiPk5vIEltZzwvdGV4dD48L3N2Zz4=';">
         <div>
           <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
         </div>
