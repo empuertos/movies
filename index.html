@@ -194,14 +194,14 @@ function createMovieCard(movie) {
 
   const img = document.createElement('img');
   console.log('Setting poster URL for movie:', movie['Movie Title'], posterUrl);
-  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://via.placeholder.com/150x225/000000/FFFFFF?text=No+Image';
+  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9Ijc1IiB5PSIxMTIiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   img.alt = movie['Movie Title'] || 'Movie Poster';
   img.style.width = '100%';
   img.style.borderRadius = '6px';
   img.style.display = 'block';
   img.loading = 'lazy';
   img.onerror = () => {
-    img.src = 'https://via.placeholder.com/150x225/000000/FFFFFF?text=No+Image';
+    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9Ijc1IiB5PSIxMTIiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   };
 
   card.appendChild(img);
@@ -630,7 +630,7 @@ class SearchManager {
 
     this.dropdown.innerHTML = this.searchResults.map((result, index) =>
       `<div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
-        <img src="${result.Poster || 'https://via.placeholder.com/50x75/000000/FFFFFF?text=No+Img'}" alt="${result.Title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/50x75/000000/FFFFFF?text=No+Img';">
+        <img src="${result.Poster || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9Ijc1IiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjUiIHk9IjM3LjUiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTAiPk5vIEltZzwvdGV4dD48L3N2Zz4='}" alt="${result.Title}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9Ijc1IiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjUiIHk9IjM3LjUiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTAiPk5vIEltZzwvdGV4dD48L3N2Zz4=';">
         <div>
           <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
         </div>
