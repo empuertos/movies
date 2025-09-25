@@ -200,6 +200,9 @@ function createMovieCard(movie) {
   img.style.borderRadius = '6px';
   img.style.display = 'block';
   img.loading = 'lazy';
+  img.onerror = () => {
+    img.src = 'https://via.placeholder.com/150x225/000000/FFFFFF?text=No+Image';
+  };
 
   card.appendChild(img);
 
