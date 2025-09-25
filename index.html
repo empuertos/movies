@@ -11,10 +11,11 @@ header h1{color:#e50914;margin:0;font-size:18px}
 .search-container{position:relative;display:inline-block}
 input[type="text"]{padding:6px;font-size:14px;width:150px;border-radius:4px;border:none}
 .dropdown{position:absolute;top:100%;left:0;right:0;background:#333;border:1px solid #555;max-height:200px;overflow-y:auto;z-index:1000;display:none}
-.dropdown-item{padding:8px;cursor:pointer;border-bottom:1px solid #444}
+.dropdown-item{padding:8px;cursor:pointer;border-bottom:1px solid #444;display:flex;align-items:center}
 .dropdown-item:hover{background:#555}
 .dropdown-item.selected{background:#e50914;color:#fff}
 .dropdown-item mark{background:#ff6b35;color:#fff;padding:1px 2px;border-radius:2px}
+.dropdown-item img{width:50px;height:75px;object-fit:cover;margin-right:10px;border-radius:4px}
 section{margin-top:15px}
 h2{margin-left:10px;font-size:16px}
 .carousel-wrapper{position:relative}
@@ -193,11 +194,12 @@ function createMovieCard(movie) {
 
   const img = document.createElement('img');
   console.log('Setting poster URL for movie:', movie['Movie Title'], posterUrl);
-  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://dummyimage.com/150x225/000/fff&text=No+Image';
+  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://via.placeholder.com/150x225/000000/FFFFFF?text=No+Image';
   img.alt = movie['Movie Title'] || 'Movie Poster';
   img.style.width = '100%';
   img.style.borderRadius = '6px';
   img.style.display = 'block';
+  img.loading = 'lazy';
 
   card.appendChild(img);
 
@@ -234,30 +236,8 @@ async function fetchPoster(imdbID) {
   const validImdbID = validImdbIdMatch[0];
 
   try {
-    // Try the original worker API first
-    console.log('Fetching poster for IMDb ID:', validImdbID);
-    const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev?movie=${validImdbID}`;
-    const response = await fetch(apiUrl);
-
-    if (response.ok) {
-      const text = await response.text();
-      console.log('Raw API response text for', validImdbID, text);
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (parseError) {
-        console.error('Failed to parse JSON for', validImdbID, parseError);
-        throw new Error('JSON parse failed');
-      }
-
-      if (data && data.Poster && data.Poster !== "N/A") {
-        console.log('Poster found:', data.Poster);
-        return data.Poster;
-      }
-    }
-
-    // If original API fails, try TMDB API as fallback
-    console.log('Trying TMDB API as fallback for', validImdbID);
+    // Try TMDB API first for poster
+    console.log('Trying TMDB API for poster for IMDb ID:', validImdbID);
 
     try {
       const apiKeyResponse = await fetch('/api/tmdb-key');
@@ -278,6 +258,28 @@ async function fetchPoster(imdbID) {
       }
     } catch (error) {
       console.error('TMDB fetch failed for', validImdbID, error);
+    }
+
+    // If TMDB fails, try the original worker API as fallback
+    console.log('Trying worker API as fallback for IMDb ID:', validImdbID);
+    const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev?movie=${validImdbID}`;
+    const response = await fetch(apiUrl);
+
+    if (response.ok) {
+      const text = await response.text();
+      console.log('Raw API response text for', validImdbID, text);
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON for', validImdbID, parseError);
+        throw new Error('JSON parse failed');
+      }
+
+      if (data && data.Poster && data.Poster !== "N/A") {
+        console.log('Worker poster found:', data.Poster);
+        return data.Poster;
+      }
     }
 
     console.warn('No poster found for', validImdbID);
@@ -625,7 +627,10 @@ class SearchManager {
 
     this.dropdown.innerHTML = this.searchResults.map((result, index) =>
       `<div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
-        <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
+        <img src="${result.Poster || 'https://via.placeholder.com/50x75/000000/FFFFFF?text=No+Img'}" alt="${result.Title}">
+        <div>
+          <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
+        </div>
       </div>`
     ).join('');
 
@@ -988,45 +993,55 @@ const videoProviders = [
   { name: 'VidFast.pro', domain: 'vidfast.pro' }
 ];
 
-// Generate embed URL for a provider
-function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
-  const baseUrls = {
-    'vidsrc.cc': type === 'series'
-      ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}?ads=0&disable_ads=1`
-      : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
-    'vidrock.net': type === 'series'
-      ? `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`
-      : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
-    'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
-    'vidfast.pro': type === 'series'
-      ? `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`
-      : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`,
-    'autoembed.cc': type === 'series'
-      ? `https://player.autoembed.cc/embed/tv/${imdbId}/${season}/${episode}`
-      : `https://player.autoembed.cc/embed/movie/${imdbId}`,
-    'embed.su': type === 'series'
-      ? `https://embed.su/embed/tv/${imdbId}/${season}/${episode}`
-      : `https://embed.su/embed/movie/${imdbId}`,
-    '111movies.com': type === 'series'
-      ? `https://111movies.com/tv/${imdbId}/${season}/${episode}`
-      : `https://111movies.com/movie/${imdbId}`,
-    'vidlink.pro': type === 'series'
-      ? `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`
-      : type === 'anime'
-      ? `https://vidlink.pro/anime/${imdbId}/${episode}/sub?fallback=true`
-      : `https://vidlink.pro/movie/${imdbId}`,
-    'player.videasy.net': type === 'series'
-      ? `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`
-      : type === 'anime'
-      ? `https://player.videasy.net/anime/${imdbId}/${episode}?dub=false`
-      : `https://player.videasy.net/movie/${imdbId}`,
-    'vidsrc.to': type === 'series'
-      ? `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`
-      : `https://vidsrc.to/embed/movie/${imdbId}`
-  };
+  // Generate embed URL for a provider
+  function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
+    const baseUrls = {
+      'vidsrc.cc': type === 'series'
+        ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}?ads=0&disable_ads=1`
+        : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
+      'vidrock.net': type === 'series'
+        ? `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`
+        : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
+      'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
+      'vidfast.pro': type === 'series'
+        ? `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`
+        : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`,
+      'autoembed.cc': type === 'series'
+        ? `https://player.autoembed.cc/embed/tv/${imdbId}/${season}/${episode}`
+        : `https://player.autoembed.cc/embed/movie/${imdbId}`,
+      'embed.su': type === 'series'
+        ? `https://embed.su/embed/tv/${imdbId}/${season}/${episode}`
+        : `https://embed.su/embed/movie/${imdbId}`,
+      '111movies.com': type === 'series'
+        ? `https://111movies.com/tv/${imdbId}/${season}/${episode}`
+        : `https://111movies.com/movie/${imdbId}`,
+      'vidlink.pro': type === 'series'
+        ? `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`
+        : type === 'anime'
+        ? `https://vidlink.pro/anime/${imdbId}/${episode}/sub?fallback=true`
+        : `https://vidlink.pro/movie/${imdbId}`,
+      'player.videasy.net': type === 'series'
+        ? `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`
+        : type === 'anime'
+        ? `https://player.videasy.net/anime/${imdbId}/${episode}?dub=false`
+        : `https://player.videasy.net/movie/${imdbId}`,
+      'vidsrc.to': type === 'series'
+        ? `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`
+        : `https://vidsrc.to/embed/movie/${imdbId}`
+    };
 
   return baseUrls[provider] || '';
 }
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
