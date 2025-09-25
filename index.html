@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Movies</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#141414;color:#fff}
@@ -29,114 +29,117 @@ h2{margin-left:10px;font-size:16px}
 
 /* Video Provider Modal Styles */
 .video-modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
+display: none;
+position: fixed;
+z-index: 1000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.9);
 }
 
 .video-modal-content {
-  background-color: #1a1a1a;
-  margin: 10% auto;
-  padding: 20px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 600px;
-  color: white;
+background-color: #1a1a1a;
+margin: 10% auto;
+padding: 20px;
+border: 1px solid #333;
+border-radius: 8px;
+width: 80%;
+max-width: 600px;
+color: white;
 }
 
 .video-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
 }
 
 .video-modal-header h3 {
-  margin: 0;
-  color: #e50914;
+margin: 0;
+color: #e50914;
 }
 
 .close-modal {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
+color: #aaa;
+float: right;
+font-size: 28px;
+font-weight: bold;
+cursor: pointer;
 }
 
 .close-modal:hover {
-  color: white;
+color: white;
 }
 
 .provider-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
-  max-height: 400px;
-  overflow-y: auto;
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 15px;
+margin-bottom: 20px;
+max-height: 400px;
+overflow-y: auto;
 }
 
 .provider-btn {
-  background: #333;
-  border: 1px solid #555;
-  color: white;
-  padding: 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
+background: #333;
+border: 1px solid #555;
+color: white;
+padding: 15px;
+border-radius: 6px;
+cursor: pointer;
+transition: all 0.3s ease;
+text-align: center;
 }
 
 .provider-btn:hover {
-  background: #e50914;
-  border-color: #e50914;
+background: #e50914;
+border-color: #e50914;
 }
 
 .provider-btn.selected {
-  background: #e50914;
-  border-color: #e50914;
+background: #e50914;
+border-color: #e50914;
 }
 
 .video-container {
-  width: 100%;
-  height: 400px;
-  border: 1px solid #333;
-  border-radius: 6px;
-  overflow: hidden;
-  display: none;
+width: 100%;
+height: 400px;
+border: 1px solid #333;
+border-radius: 6px;
+overflow: hidden;
+display: none;
 }
 
 .video-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
+width: 100%;
+height: 100%;
+border: none;
 }
 </style>
 <script>
-const WORKER_URL = 'https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
+const OMDB_WORKER_URL = 'https://omdb.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev/';
+const MOVIELIST_WORKER_URL = 'https://movielist.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev/';
 </script>
 </head>
 <body>
 <header>
-  <h1>Movies</h1>
-  <div class="search-container">
-    <input type="text" id="search" placeholder="Search...">
-  </div>
+<h1>Movies</h1>
+<div class="search-container">
+<input type="text" id="search" placeholder="Search..." />
+</div>
 </header>
 
-<section>
-</section>
+<section></section>
 
 <section id="mostPopularMovies" style="margin: 20px;">
-  <h2 style="color: white; margin-left: 10px;">Most Popular Movies</h2>
-  <div id="popularMoviesGrid" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+<h2 style="color: white; margin-left: 10px;">Most Popular Movies</h2>
+<div
+  id="popularMoviesGrid"
+  style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"
+></div>
 </section>
 
 <script>
@@ -151,7 +154,7 @@ function parseCSV(csvText) {
   const lines = csvText.trim().split('\n');
   const headers = parseCSVLine(lines[0]);
   const rows = lines.slice(1);
-  return rows.map(line => {
+  return rows.map((line) => {
     const values = parseCSVLine(line);
     const obj = {};
     headers.forEach((header, i) => {
@@ -190,18 +193,24 @@ function createMovieCard(movie) {
   card.style.cursor = 'pointer';
 
   const posterUrl = movie.Poster || movie.Image || '';
-  const imdbId = movie['IMDb URL'] ? (movie['IMDb URL'].match(/tt\d{7,8}/) || [''])[0] : '';
+  const imdbId = movie['IMDb URL']
+    ? (movie['IMDb URL'].match(/tt\d{7,8}/) || [''])[0]
+    : '';
 
   const img = document.createElement('img');
   console.log('Setting poster URL for movie:', movie['Movie Title'], posterUrl);
-  img.src = posterUrl && posterUrl !== "N/A" ? posterUrl : 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg';
+  img.src =
+    posterUrl && posterUrl !== 'N/A'
+      ? posterUrl
+      : 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg';
   img.alt = movie['Movie Title'] || 'Movie Poster';
   img.style.width = '100%';
   img.style.borderRadius = '6px';
   img.style.display = 'block';
   img.loading = 'lazy';
   img.onerror = () => {
-    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9Ijc1IiB5PSIxMTIiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+    img.src =
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIyNSIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9Ijc1IiB5PSIxMTIiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   };
 
   card.appendChild(img);
@@ -263,9 +272,9 @@ async function fetchPoster(imdbID) {
       console.error('TMDB fetch failed for', validImdbID, error);
     }
 
-    // If TMDB fails, try the original worker API as fallback
-    console.log('Trying worker API as fallback for IMDb ID:', validImdbID);
-    const apiUrl = `https://noisy-frog-a9ab.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev?movie=${validImdbID}`;
+    // If TMDB fails, try the OMDB worker API as fallback
+    console.log('Trying OMDB worker API as fallback for IMDb ID:', validImdbID);
+    const apiUrl = `${OMDB_WORKER_URL}?movie=${validImdbID}`;
     const response = await fetch(apiUrl);
 
     if (response.ok) {
@@ -279,8 +288,8 @@ async function fetchPoster(imdbID) {
         throw new Error('JSON parse failed');
       }
 
-      if (data && data.Poster && data.Poster !== "N/A") {
-        console.log('Worker poster found:', data.Poster);
+      if (data && data.Poster && data.Poster !== 'N/A') {
+        console.log('OMDB worker poster found:', data.Poster);
         return data.Poster;
       }
     }
@@ -294,7 +303,8 @@ async function fetchPoster(imdbID) {
 }
 
 async function renderMostPopularMovies() {
-  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy8FBC-tlZoaaP1mVzAgxTy-817j3ViS_h9dM8rz0VOEkUqVj77vGVrjNneAYQbkP9R48dGMnGIPX4/pub?gid=0&single=true&output=csv';
+  const csvUrl =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy8FBC-tlZoaaP1mVzAgxTy-817j3ViS_h9dM8rz0VOEkUqVj77vGVrjNneAYQbkP9R48dGMnGIPX4/pub?gid=0&single=true&output=csv';
   try {
     console.log('Fetching CSV from:', csvUrl);
     const csvText = await fetchCSV(csvUrl);
@@ -330,7 +340,8 @@ async function renderMostPopularMovies() {
     // Add a fallback message
     const grid = document.getElementById('popularMoviesGrid');
     if (grid) {
-      grid.innerHTML = '<p style="color: red;">Failed to load movies. Check console for errors.</p>';
+      grid.innerHTML =
+        '<p style="color: red;">Failed to load movies. Check console for errors.</p>';
     }
   }
 }
@@ -455,7 +466,7 @@ class SearchManager {
         this.cache.set(query, detailedResults);
         this.displayResults(detailedResults);
       } else {
-        // Step 3: Try the original worker API as fallback
+        // Step 3: Try the OMDB worker API as fallback
         const workerResults = await this.searchWorkerAPI(query);
         if (workerResults.length > 0) {
           this.cache.set(query, workerResults);
@@ -476,7 +487,9 @@ class SearchManager {
     try {
       const apiKeyResponse = await fetch('/api/tmdb-key');
       const tmdbApiKey = await apiKeyResponse.text();
-      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
+      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(
+        query
+      )}&language=en-US&page=1`;
 
       const response = await fetch(tmdbUrl);
       if (!response.ok) {
@@ -487,13 +500,15 @@ class SearchManager {
       console.log('TMDB search results:', data);
 
       if (data.results && data.results.length > 0) {
-        return data.results.slice(0, 5).map(movie => ({
+        return data.results.slice(0, 5).map((movie) => ({
           Title: movie.title,
           Year: movie.release_date ? movie.release_date.substring(0, 4) : '',
           imdbID: movie.id.toString(),
           Type: 'movie',
-          Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '',
-          tmdbData: movie // Store full TMDB data for later use
+          Poster: movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : '',
+          tmdbData: movie, // Store full TMDB data for later use
         }));
       }
       return [];
@@ -508,25 +523,27 @@ class SearchManager {
 
     for (const movie of tmdbResults) {
       try {
-        // Try to get detailed info from the worker API using the movie title
-        const workerResponse = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(movie.Title)}`);
+        // Try to get detailed info from the OMDB worker API using the movie title
+        const workerResponse = await fetch(
+          `${OMDB_WORKER_URL}?movie=${encodeURIComponent(movie.Title)}`
+        );
 
         if (workerResponse.ok) {
           const workerData = await workerResponse.json();
-          console.log('Worker API detailed data:', workerData);
+          console.log('OMDB worker API detailed data:', workerData);
 
-          if (workerData.Response === "True") {
+          if (workerData.Response === 'True') {
             // Use the detailed data from worker API
             detailedResults.push({
               Title: workerData.Title,
               Year: workerData.Year,
               imdbID: workerData.imdbID,
               Type: workerData.Type,
-              Poster: workerData.Poster !== "N/A" ? workerData.Poster : movie.Poster,
+              Poster: workerData.Poster !== 'N/A' ? workerData.Poster : movie.Poster,
               Plot: workerData.Plot,
               Genre: workerData.Genre,
               Director: workerData.Director,
-              Actors: workerData.Actors
+              Actors: workerData.Actors,
             });
           } else {
             // Fallback to TMDB data
@@ -547,35 +564,35 @@ class SearchManager {
 
   async searchWorkerAPI(query) {
     try {
-      const response = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(query)}`);
+      const response = await fetch(`${OMDB_WORKER_URL}?movie=${encodeURIComponent(query)}`);
 
       if (!response.ok) {
-        throw new Error(`Worker API error: ${response.status}`);
+        throw new Error(`OMDB worker API error: ${response.status}`);
       }
 
       const responseText = await response.text();
-      console.log('Worker API raw response:', responseText);
+      console.log('OMDB worker API raw response:', responseText);
 
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('Failed to parse Worker API JSON:', parseError);
+        console.error('Failed to parse OMDB worker API JSON:', parseError);
         return [];
       }
 
-      console.log('Worker API parsed response:', data);
+      console.log('OMDB worker API parsed response:', data);
 
       // Handle different response formats
       if (data.Search && Array.isArray(data.Search)) {
         return data.Search.slice(0, 5);
-      } else if (data.Response === "True" && data.Title) {
+      } else if (data.Response === 'True' && data.Title) {
         return [data];
       }
 
       return [];
     } catch (error) {
-      console.error('Worker API search failed:', error);
+      console.error('OMDB worker API search failed:', error);
       return [];
     }
   }
@@ -587,7 +604,9 @@ class SearchManager {
       // Use TMDB API as fallback
       const apiKeyResponse = await fetch('/api/tmdb-key');
       const tmdbApiKey = await apiKeyResponse.text();
-      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
+      const tmdbUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(
+        query
+      )}&language=en-US&page=1`;
 
       const response = await fetch(tmdbUrl);
       if (!response.ok) {
@@ -599,12 +618,14 @@ class SearchManager {
 
       if (data.results && data.results.length > 0) {
         // Convert TMDB results to expected format
-        const results = data.results.slice(0, 5).map(movie => ({
+        const results = data.results.slice(0, 5).map((movie) => ({
           Title: movie.title,
           Year: movie.release_date ? movie.release_date.substring(0, 4) : '',
           imdbID: movie.id.toString(),
           Type: 'movie',
-          Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ''
+          Poster: movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : '',
         }));
 
         // Cache the results
@@ -628,14 +649,20 @@ class SearchManager {
       return;
     }
 
-    this.dropdown.innerHTML = this.searchResults.map((result, index) =>
-      `<div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
-        <img src="${result.Poster || 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'}" alt="${result.Title}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9Ijc1IiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjUiIHk9IjM3LjUiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTAiPk5vIEltZzwvdGV4dD48L3N2Zz4=';">
+    this.dropdown.innerHTML = this.searchResults
+      .map(
+        (result, index) => `
+      <div class="dropdown-item" data-imdb="${result.imdbID}" data-type="${result.Type}" data-index="${index}" role="option" aria-selected="false">
+        <img src="${
+          result.Poster ||
+          'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'
+        }" alt="${result.Title}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9Ijc1IiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjUiIHk9IjM3LjUiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTAiPk5vIEltZzwvdGV4dD48L3N2Zz4=';">
         <div>
           <strong>${this.highlightQuery(result.Title)}</strong> (${result.Year}) - ${result.Type}
         </div>
       </div>`
-    ).join('');
+      )
+      .join('');
 
     this.showDropdown();
   }
@@ -649,7 +676,8 @@ class SearchManager {
   }
 
   showLoadingState() {
-    this.dropdown.innerHTML = '<div class="dropdown-item" style="text-align: center; color: #999;">Searching...</div>';
+    this.dropdown.innerHTML =
+      '<div class="dropdown-item" style="text-align: center; color: #999;">Searching...</div>';
     this.dropdown.style.display = 'block';
   }
 
@@ -742,12 +770,12 @@ class SearchManager {
     if (!query) return;
 
     try {
-      const response = await fetch(`${WORKER_URL}?movie=${encodeURIComponent(query)}`);
+      const response = await fetch(`${OMDB_WORKER_URL}?movie=${encodeURIComponent(query)}`);
       const data = await response.json();
 
       if (data.Search && data.Search.length > 0) {
         const first = data.Search[0];
-        const type = first.Type === "series" ? "series" : "movie";
+        const type = first.Type === 'series' ? 'series' : 'movie';
         const title = first.Title;
 
         // Show provider selection instead of opening directly
@@ -757,11 +785,11 @@ class SearchManager {
         this.searchInput.value = '';
         this.hideDropdown();
       } else {
-        this.showErrorState("Movie not found!");
+        this.showErrorState('Movie not found!');
       }
     } catch (error) {
       console.error('Enter key search error:', error);
-      this.showErrorState("Search failed. Please try again.");
+      this.showErrorState('Search failed. Please try again.');
     }
   }
 
@@ -800,34 +828,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script defer>
 // fetch movies in parallel
-async function fetchMovies(titles){
-  try{
+async function fetchMovies(titles) {
+  try {
     console.log('Fetching movies for titles:', titles);
-    const results=await Promise.all(titles.map(title=>
-      fetch(`${WORKER_URL}?movie=${encodeURIComponent(title)}`).then(r=>r.json())
-    ));
+    const results = await Promise.all(
+      titles.map((title) =>
+        fetch(`${OMDB_WORKER_URL}?movie=${encodeURIComponent(title)}`).then((r) => r.json())
+      )
+    );
     console.log('Fetched results:', results);
-    const filtered = results.filter(m=>m.Response==="True").map(m=>({
-      title:m.Title,imdb:m.imdbID,poster:m.Poster,plot:m.Plot, year: m.Year
-    }));
+    const filtered = results
+      .filter((m) => m.Response === 'True')
+      .map((m) => ({
+        title: m.Title,
+        imdb: m.imdbID,
+        poster: m.Poster,
+        plot: m.Plot,
+        year: m.Year,
+      }));
     console.log('Filtered movies:', filtered);
     return filtered;
-  }catch(e){console.error(e);return []}
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 }
 
 // render carousel for mobile
-function renderCarousel(movies,containerId, type = "movie"){
+function renderCarousel(movies, containerId, type = 'movie') {
   console.log('Rendering movies for', containerId, ':', movies);
-  const container=document.getElementById(containerId);
-  container.innerHTML=movies.map(movie=>`
+  const container = document.getElementById(containerId);
+  container.innerHTML = movies
+    .map(
+      (movie) => `
     <div class="movie-card" data-imdb="${movie.imdb}">
-      <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
+      <img src="${movie.poster}" alt="${movie.title}" loading="lazy" />
       <div class="movie-title">${movie.title}</div>
-    </div>
-  `).join("");
+    </div>`
+    )
+    .join('');
 
-  container.querySelectorAll(".movie-card").forEach(card=>{
-    card.onclick=async ()=>{
+  container.querySelectorAll('.movie-card').forEach((card) => {
+    card.onclick = async () => {
       try {
         const imdb = card.dataset.imdb;
         const title = card.querySelector('.movie-title').textContent;
@@ -836,23 +878,29 @@ function renderCarousel(movies,containerId, type = "movie"){
         showVideoModal(title, imdb, type);
       } catch (err) {
         console.error(err);
-        alert("Failed to load video options");
+        alert('Failed to load video options');
       }
     };
   });
 }
 
 // enable swipe
-function addSwipe(id){
-  const slider=document.getElementById(id);
-  let isDown=false,startX,scrollLeft;
-  slider.addEventListener("pointerdown",e=>{isDown=true;startX=e.pageX-slider.offsetLeft;scrollLeft=slider.scrollLeft});
-  slider.addEventListener("pointerleave",()=>isDown=false);
-  slider.addEventListener("pointerup",()=>isDown=false);
-  slider.addEventListener("pointermove",e=>{
-    if(!isDown)return;
+function addSwipe(id) {
+  const slider = document.getElementById(id);
+  let isDown = false,
+    startX,
+    scrollLeft;
+  slider.addEventListener('pointerdown', (e) => {
+    isDown = true;
+    startX = e.pageX - slider.offsetLeft;
+    scrollLeft = slider.scrollLeft;
+  });
+  slider.addEventListener('pointerleave', () => (isDown = false));
+  slider.addEventListener('pointerup', () => (isDown = false));
+  slider.addEventListener('pointermove', (e) => {
+    if (!isDown) return;
     e.preventDefault();
-    slider.scrollLeft=scrollLeft-(e.pageX-startX)*2;
+    slider.scrollLeft = scrollLeft - (e.pageX - startX) * 2;
   });
 }
 
@@ -885,16 +933,16 @@ function showVideoModal(title, imdbId, type) {
     const seasonEpisodeDiv = document.createElement('div');
     seasonEpisodeDiv.innerHTML = `
       <label for="seasonInput">Season:</label>
-      <input type="number" id="seasonInput" min="1" value="1" style="margin: 0 10px;">
+      <input type="number" id="seasonInput" min="1" value="1" style="margin: 0 10px;" />
       <label for="episodeInput">Episode:</label>
-      <input type="number" id="episodeInput" min="1" value="1" style="margin: 0 10px;">
+      <input type="number" id="episodeInput" min="1" value="1" style="margin: 0 10px;" />
     `;
     providerGrid.appendChild(seasonEpisodeDiv);
   }
 
   // Add provider buttons with debugging and error handling
   console.log('videoProviders array:', videoProviders);
-  videoProviders.forEach(provider => {
+  videoProviders.forEach((provider) => {
     try {
       console.log('Creating button for provider:', provider.name);
       const button = document.createElement('button');
@@ -951,21 +999,21 @@ function closeVideoModal() {
 document.getElementById('closeModal').onclick = closeVideoModal;
 
 // Close modal when clicking outside
-document.getElementById('videoModal').onclick = function(e) {
+document.getElementById('videoModal').onclick = function (e) {
   if (e.target === this) {
     closeVideoModal();
   }
 };
 
 // Close modal on Escape key
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     closeVideoModal();
   }
 });
 
 // handle dropdown clicks
-document.addEventListener('click', async function(e){
+document.addEventListener('click', async function (e) {
   const dropdown = document.querySelector('.dropdown');
   if (e.target.classList.contains('dropdown-item')) {
     const imdb = e.target.dataset.imdb;
@@ -995,56 +1043,3 @@ const videoProviders = [
   { name: 'VidSrc.me', domain: 'vidsrc.me' },
   { name: 'VidFast.pro', domain: 'vidfast.pro' }
 ];
-
-  // Generate embed URL for a provider
-  function generateEmbedUrl(provider, imdbId, type, season = 1, episode = 1) {
-    const baseUrls = {
-      'vidsrc.cc': type === 'series'
-        ? `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}?ads=0&disable_ads=1`
-        : `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`,
-      'vidrock.net': type === 'series'
-        ? `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`
-        : `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`,
-      'vidsrc.me': `https://vidsrc.me/embed/${type}/${imdbId}?ads=0&disable_ads=1`,
-      'vidfast.pro': type === 'series'
-        ? `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`
-        : `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`,
-      'autoembed.cc': type === 'series'
-        ? `https://player.autoembed.cc/embed/tv/${imdbId}/${season}/${episode}`
-        : `https://player.autoembed.cc/embed/movie/${imdbId}`,
-      'embed.su': type === 'series'
-        ? `https://embed.su/embed/tv/${imdbId}/${season}/${episode}`
-        : `https://embed.su/embed/movie/${imdbId}`,
-      '111movies.com': type === 'series'
-        ? `https://111movies.com/tv/${imdbId}/${season}/${episode}`
-        : `https://111movies.com/movie/${imdbId}`,
-      'vidlink.pro': type === 'series'
-        ? `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`
-        : type === 'anime'
-        ? `https://vidlink.pro/anime/${imdbId}/${episode}/sub?fallback=true`
-        : `https://vidlink.pro/movie/${imdbId}`,
-      'player.videasy.net': type === 'series'
-        ? `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`
-        : type === 'anime'
-        ? `https://player.videasy.net/anime/${imdbId}/${episode}?dub=false`
-        : `https://player.videasy.net/movie/${imdbId}`,
-      'vidsrc.to': type === 'series'
-        ? `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`
-        : `https://vidsrc.to/embed/movie/${imdbId}`
-    };
-
-  return baseUrls[provider] || '';
-}
-</script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
