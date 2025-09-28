@@ -46,6 +46,28 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
+// Proxy for movie details and videos
+app.get('/api/details', async (req, res) => {
+    try {
+        const movieId = req.query.movie_id;
+        if (!movieId) {
+            return res.status(400).json({ error: 'Movie ID required' });
+        }
+        const detailsUrl = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`;
+        const videosUrl = `${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`;
+        const [detailsRes, videosRes] = await Promise.all([fetch(detailsUrl), fetch(videosUrl)]);
+        if (!detailsRes.ok || !videosRes.ok) {
+            throw new Error('API request failed');
+        }
+        const details = await detailsRes.json();
+        const videos = await videosRes.json();
+        res.json({ details, videos });
+    } catch (error) {
+        console.error('Error fetching movie details:', error);
+        res.status(500).json({ error: 'Failed to fetch movie details' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
