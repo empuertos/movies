@@ -10,12 +10,16 @@
     <header>
         <div class="container">
             <h1>MovieHub</h1>
+            <div class="toggle-buttons">
+                <button id="movieToggle" class="toggle-btn active" data-type="movie">Movies</button>
+                <button id="tvToggle" class="toggle-btn" data-type="tv">TV Shows</button>
+            </div>
+            <button id="themeToggle" class="theme-btn">🌙</button>
             <div class="search-bar">
-                <input type="text" placeholder="Search movies...">
+                <input type="text" placeholder="Search movies or TV shows...">
                 <button>Search</button>
             </div>
         </div>
-    </header>
 
     <main>
         <section id="hero">
@@ -25,22 +29,22 @@
             </div>
         </section>
 
-        <section id="movies">
+        <section id="content">
             <div class="container">
-                <h2>Featured Movies</h2>
+                <h2>Featured Content</h2>
                 <div class="movie-grid" id="movieGrid">
-                    <!-- Movies will be populated dynamically -->
+                    <!-- Content will be populated dynamically -->
                 </div>
             </div>
         </section>
 
-        <!-- Movie Details Modal -->
+        <!-- Content Details Modal -->
         <div id="movieModal" class="modal">
             <div class="modal-backdrop" onclick="closeModal()"></div>
             <div class="modal-content">
                 <span class="close" onclick="closeModal()">&times;</span>
                 <div class="movie-details">
-                    <img id="modalPoster" src="" alt="Movie Poster">
+                    <img id="modalPoster" src="" alt="Content Poster">
                     <div class="details-text">
                         <h2 id="modalTitle"></h2>
                         <p id="modalOverview"></p>
@@ -51,13 +55,30 @@
                     <h3>Trailer</h3>
                     <iframe id="trailerIframe" width="100%" height="400" frameborder="0" allowfullscreen style="display: none;"></iframe>
                 </div>
-                <button id="playButton" onclick="playMovie()">Play Full Movie</button>
+                <button id="playButton" onclick="playContent()">Play Content</button>
                 <div id="streamingSection" style="display: none;">
-                    <h3>Watch Movie</h3>
+                    <h3>Watch Content</h3>
                     <div class="provider-controls">
+                        <select id="seasonSelect" style="display: none;">
+                            <!-- Seasons populated dynamically -->
+                        </select>
+                        <select id="episodeSelect" style="display: none;">
+                            <!-- Episodes populated dynamically -->
+                        </select>
                         <select id="providerSelect">
                             <option value="vidrock">VidRock</option>
                             <option value="vidsrc">VidSrc</option>
+                            <option value="vidsrccc">VidSrc CC</option>
+                            <option value="vidfast">VidFast</option>
+                            <option value="autoembed">AutoEmbed</option>
+                            <option value="embedsu">Embed.su</option>
+                            <option value="111movies">111Movies</option>
+                            <option value="vidlink">VidLink</option>
+                            <option value="videasy">VidEasy</option>
+                            <option value="vidsrcto">VidSrc.to</option>
+                            <option value="vidrockembed">VidRock Embed</option>
+                            <option value="vidsrcpro">VidSrc Pro</option>
+                            <option value="smashystream">SmashyStream</option>
                             <option value="embedsoap">EmbedSoap</option>
                         </select>
                         <button id="refreshButton">Refresh</button>
