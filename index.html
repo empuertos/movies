@@ -54,6 +54,14 @@
                 <button id="playButton" onclick="playMovie()">Play Full Movie</button>
                 <div id="streamingSection" style="display: none;">
                     <h3>Watch Movie</h3>
+                    <div class="provider-controls">
+                        <select id="providerSelect">
+                            <option value="vidrock">VidRock</option>
+                            <option value="vidsrc">VidSrc</option>
+                            <option value="embedsoap">EmbedSoap</option>
+                        </select>
+                        <button id="refreshButton">Refresh</button>
+                    </div>
                     <iframe id="streamingIframe" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
