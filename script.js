@@ -11,7 +11,7 @@ function createMovieCard(movie) {
     const genreNames = movie.genre_ids ? movie.genre_ids.map(id => getGenreName(id)).join(', ') : 'N/A';
     
     return `
-        <div class="movie-card">
+        <div class="movie-card" onclick="showMovieDetails(${movie.id})">
             <img src="${movie.poster_path ? IMAGE_BASE_URL + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${movie.title}">
             <h3>${movie.title}</h3>
             <p>${year} | ${genreNames} | ${rating}</p>
@@ -94,25 +94,82 @@ async function searchMovies(query) {
     }
 }
 
-// Smooth scrolling for nav links
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('nav a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
+
+
+// Movie Details Modal Functions
+let currentMovieId = null;
+
+async function showMovieDetails(movieId) {
+    currentMovieId = movieId;
+    const modal = document.getElementById('movieModal');
+    const trailerIframe = document.getElementById('trailerIframe');
+    const trailerSection = document.getElementById('trailerSection');
+    const playButton = document.getElementById('playButton');
+    const streamingSection = document.getElementById('streamingSection');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/details?movie_id=${movieId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch movie details');
+        }
+        const { details, videos } = await response.json();
+
+        // Populate details
+        document.getElementById('modalTitle').textContent = details.title || 'Unknown Title';
+        document.getElementById('modalOverview').textContent = details.overview || 'No overview available.';
+        document.getElementById('modalPoster').src = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/200x300?text=No+Image';
+        const year = details.release_date ? details.release_date.split('-')[0] : 'N/A';
+        const genres = details.genres ? details.genres.map(g => g.name).join(', ') : 'N/A';
+        const rating = details.vote_average ? (details.vote_average / 10).toFixed(1) : 'N/A';
+        document.getElementById('modalInfo').textContent = `${year} | ${genres} | ${rating}`;
+
+        // Handle trailer
+        trailerIframe.style.display = 'none';
+        const trailer = videos.results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+        if (trailer) {
+            trailerIframe.src = `https://www.youtube.com/embed/${trailer.key}`;
+            trailerIframe.style.display = 'block';
+        } else {
+            trailerSection.innerHTML = '<h3>Trailer</h3><p>No trailer available.</p>';
+        }
+
+        // Reset streaming
+        streamingSection.style.display = 'none';
+        playButton.style.display = 'block';
+
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading movie details:', error);
+        alert('Failed to load movie details.');
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById('movieModal');
+    modal.style.display = 'none';
+}
+
+function playMovie() {
+    if (!currentMovieId) return;
+    const trailerSection = document.getElementById('trailerSection');
+    const playButton = document.getElementById('playButton');
+    const streamingSection = document.getElementById('streamingSection');
+    const streamingIframe = document.getElementById('streamingIframe');
+
+    trailerSection.style.display = 'none';
+    playButton.style.display = 'none';
+    streamingSection.style.display = 'block';
+    streamingIframe.src = `https://vidrock.net/embed/movie/${currentMovieId}`;
 }
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.search-bar input');
     const searchButton = document.querySelector('.search-bar button');
+    const modal = document.getElementById('movieModal');
+    
+    // Ensure modal is hidden initially
+    modal.style.display = 'none';
     
     // Load popular movies
     fetchPopularMovies();
@@ -136,6 +193,4 @@ document.addEventListener('DOMContentLoaded', function() {
             handleSearch();
         }
     });
-    
-    setupNavigation();
 });
