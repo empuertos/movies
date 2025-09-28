@@ -149,17 +149,41 @@ function closeModal() {
     modal.style.display = 'none';
 }
 
+function getProviderUrl(provider, movieId) {
+    switch(provider) {
+        case 'vidrock': return `https://vidrock.net/embed/movie/${movieId}`;
+        case 'vidsrc': return `https://vidsrc.me/embed/movie/${movieId}`;
+        case 'embedsoap': return `https://www.embedsoap.com/embed/movie/${movieId}`;
+        default: return `https://vidrock.net/embed/movie/${movieId}`;
+    }
+}
+
 function playMovie() {
     if (!currentMovieId) return;
     const trailerSection = document.getElementById('trailerSection');
     const playButton = document.getElementById('playButton');
     const streamingSection = document.getElementById('streamingSection');
     const streamingIframe = document.getElementById('streamingIframe');
+    const providerSelect = document.getElementById('providerSelect');
+    const refreshButton = document.getElementById('refreshButton');
 
     trailerSection.style.display = 'none';
     playButton.style.display = 'none';
     streamingSection.style.display = 'block';
-    streamingIframe.src = `https://vidrock.net/embed/movie/${currentMovieId}`;
+
+    // Set initial provider
+    streamingIframe.src = getProviderUrl('vidrock', currentMovieId);
+
+    // Provider change handler
+    providerSelect.addEventListener('change', () => {
+        const provider = providerSelect.value;
+        streamingIframe.src = getProviderUrl(provider, currentMovieId);
+    });
+
+    // Refresh handler
+    refreshButton.addEventListener('click', () => {
+        streamingIframe.src = streamingIframe.src;
+    });
 }
 
 // Initialize on DOM load
