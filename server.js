@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = 3000;
-const TMDB_API_KEY = 'cb01dd617d05f4329238ff90e0337f17';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || 'your-local-key-here'; // Set via .env or environment variable for security
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Middleware
