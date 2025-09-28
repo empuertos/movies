@@ -1,5 +1,7 @@
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
+const API_BASE_URL = 'https://tmbd.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
+
 let allMovies = []; // Store fetched movies for filtering
 
 // Function to create movie card HTML
@@ -52,12 +54,15 @@ function populateMovies(movies) {
     allMovies = movies; // Update global for search
 }
 
-// Fetch popular movies (100 total from 5 pages)
+// Fetch popular movies (100 total from 5 pages) via proxy
 async function fetchPopularMovies() {
     try {
         let allResults = [];
         for (let page = 1; page <= 5; page++) {
-            const response = await fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`);
+            const response = await fetch(`${API_BASE_URL}/api/popular?page=${page}`);
+            if (!response.ok) {
+                throw new Error('Proxy request failed');
+            }
             const data = await response.json();
             allResults = allResults.concat(data.results);
         }
@@ -69,15 +74,18 @@ async function fetchPopularMovies() {
     }
 }
 
-// Fetch search results
+// Fetch search results via proxy
 async function searchMovies(query) {
     if (query.length < 3) {
         populateMovies(allMovies); // Show popular if short query
         return;
     }
-    
+
     try {
-        const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`);
+        const response = await fetch(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+            throw new Error('Proxy request failed');
+        }
         const data = await response.json();
         populateMovies(data.results);
     } catch (error) {
