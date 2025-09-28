@@ -258,8 +258,8 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidrock': return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
             case 'vidsrc': return `https://vidsrc.me/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
             case 'vidfast': return `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/tv/${imdbId}/${season}/${episode}`;
-            case 'embedsu': return `https://embed.su/embed/tv/${imdbId}/${season}/${episode}`;
+            case 'autoembed': return `https://player.autoembed.cc/embed/tv/${contentId}/${season}/${episode}`;
+            case 'embedsu': return `https://embed.su/embed/tv/${contentId}/${season}/${episode}`;
             case '111movies': return `https://111movies.com/tv/${imdbId}/${season}/${episode}`;
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
             case 'videasy': return `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`;
@@ -272,8 +272,8 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidrock': return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`;
             case 'vidsrc': return `https://vidsrc.me/embed/movie/${imdbId}?ads=0&disable_ads=1`;
             case 'vidfast': return `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/movie/${imdbId}`;
-            case 'embedsu': return `https://embed.su/embed/movie/${imdbId}`;
+            case 'autoembed': return `https://player.autoembed.cc/embed/movie/${contentId}`;
+            case 'embedsu': return `https://embed.su/embed/movie/${contentId}`;
             case '111movies': return `https://111movies.com/movie/${imdbId}`;
             case 'vidlink': return `https://vidlink.pro/movie/${imdbId}`;
             case 'videasy': return `https://player.videasy.net/movie/${imdbId}`;
