@@ -234,16 +234,17 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
     if (!imdbId) {
         // Fallback to TMDB ID for providers that support it
         if (isTV) {
-            switch(provider) {
-                case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
-                case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}`;
-                case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}`;
-                case 'embedsoap': return `https://www.embedsoap.com/embed/tv/${contentId}/${season}/${episode}`;
-                case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}`;
-                case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}`;
-                case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}`;
-                default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
-            }
+        switch(provider) {
+            case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
+            case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}`;
+            case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}`;
+            case 'embedsoap': return `https://www.embedsoap.com/embed/tv/${contentId}/${season}/${episode}`;
+            case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}`;
+            case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}`;
+            case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}`;
+            case 'videasy': return `https://videasy.tv/embed/tv/${contentId}/${season}/${episode}`;
+            default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
+        }
         } else {
             switch(provider) {
                 case 'vidrockembed': return `https://vidrock.net/embed/movie/${contentId}`;
@@ -264,6 +265,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
                 case 'frembed': return `https://frembed.lat/api/film.php?id=${contentId}`;
                 case 'uembed': return `http://uembed.xyz/embed/movie/?id=${contentId}`;
                 case 'warezcdn': return `https://embed.warezcdn.com/filme/${contentId}`;
+                case 'videasy': return `https://videasy.tv/embed/movie/${contentId}`;
                 default: return `https://vidrock.net/embed/movie/${contentId}`;
             }
         }
@@ -275,11 +277,11 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidrock': return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
             case 'vidsrc': return `https://vidsrc.me/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
             case 'vidfast': return `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/tv/${contentId}/${season}/${episode}`;
+            case 'autoembed': return `https://autoembed.cc/embed/tv/${contentId}/${season}/${episode}`;
             case 'embedsu': return `https://moviemaze.cc/watch/tv/${contentId}/${season}/${episode}`;
             case '111movies': return `https://111movies.com/tv/${imdbId}/${season}/${episode}`;
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
-            case 'videasy': return `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`;
+            case 'videasy': return `https://videasy.tv/embed/tv/${contentId}/${season}/${episode}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`;
             case 'kisskh': return `https://kisskh.co/tv/${imdbId}/${season}/${episode}`;
             default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
@@ -290,11 +292,11 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidrock': return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`;
             case 'vidsrc': return `https://vidsrc.me/embed/movie/${imdbId}?ads=0&disable_ads=1`;
             case 'vidfast': return `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/movie/${contentId}`;
+            case 'autoembed': return `https://autoembed.cc/embed/movie/${contentId}?ads=0&disable_ads=1`;
             case 'embedsu': return `https://moviemaze.cc/watch/movie/${contentId}`;
             case '111movies': return `https://111movies.com/movie/${imdbId}`;
             case 'vidlink': return `https://vidlink.pro/movie/${imdbId}`;
-            case 'videasy': return `https://player.videasy.net/movie/${imdbId}`;
+            case 'videasy': return `https://videasy.tv/embed/movie/${contentId}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/movie/${imdbId}`;
             default: return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`;
         }
@@ -314,12 +316,32 @@ function playContent() {
     streamingSection.style.display = 'block';
 
     // Set initial provider
-    streamingIframe.src = getProviderUrl('vidrock', currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+    const defaultProvider = 'vidrock';
+    let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+    streamingIframe.src = currentSrc;
+
+    function handleIframeLoad() {
+        // Optional: Check if content loaded (e.g., via postMessage or simple timeout check)
+        console.log('Iframe loaded successfully');
+    }
+
+    function handleIframeError() {
+        console.error('Iframe failed to load');
+        alert('This provider is unavailable. Switching to default provider.');
+        streamingIframe.src = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+    }
+
+    streamingIframe.onload = handleIframeLoad;
+    streamingIframe.onerror = handleIframeError;
 
     // Provider change handler
     providerSelect.addEventListener('change', () => {
         const provider = providerSelect.value;
-        streamingIframe.src = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+        currentSrc = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+        streamingIframe.src = currentSrc;
+        // Re-attach handlers in case changed
+        streamingIframe.onload = handleIframeLoad;
+        streamingIframe.onerror = handleIframeError;
     });
 
     // Refresh handler
