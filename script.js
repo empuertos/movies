@@ -239,6 +239,9 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
                 case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}`;
                 case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}`;
                 case 'embedsoap': return `https://www.embedsoap.com/embed/tv/${contentId}/${season}/${episode}`;
+                case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}`;
+                case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}`;
+                case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}`;
                 default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
             }
         } else {
@@ -247,6 +250,20 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
                 case 'vidsrcpro': return `https://vidsrc.pro/embed/movie/${contentId}`;
                 case 'smashystream': return `https://smashy.stream/embed/movie/${contentId}`;
                 case 'embedsoap': return `https://www.embedsoap.com/embed/movie/${contentId}`;
+                case 'vidplus': return `https://player.vidplus.to/embed/movie/${contentId}`;
+                case 'vidking': return `https://www.vidking.net/embed/movie/${contentId}`;
+                case 'xprime': return `https://xprime.tv/watch/${contentId}`;
+                case 'vixsrc': return `https://vixsrc.to/movie/${contentId}`;
+                case 'rivestream': return `https://rivestream.org/embed?type=movie&id=${contentId}&sendMetadata=true`;
+                case 'vidzee': return `https://player.vidzee.wtf/embed/movie/${contentId}`;
+                case '2embed': return `https://www.2embed.stream/embed/movie/${contentId}`;
+                case 'moviekex': return `https://moviekex.online/embed/movie/${contentId}`;
+                case 'vidpro': return `https://player.vidpro.top/embed/movie/${contentId}`;
+                case 'primesrc': return `https://primesrc.me/embed/movie?imdb=${contentId}&fallback=true&server_order=PrimeVid,Voe,Dood`;
+                case 'moviesapi': return `https://moviesapi.club/movie/${contentId}`;
+                case 'frembed': return `https://frembed.lat/api/film.php?id=${contentId}`;
+                case 'uembed': return `http://uembed.xyz/embed/movie/?id=${contentId}`;
+                case 'warezcdn': return `https://embed.warezcdn.com/filme/${contentId}`;
                 default: return `https://vidrock.net/embed/movie/${contentId}`;
             }
         }
@@ -264,6 +281,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
             case 'videasy': return `https://player.videasy.net/tv/${imdbId}/${season}/${episode}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`;
+            case 'kisskh': return `https://kisskh.co/tv/${imdbId}/${season}/${episode}`;
             default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
         }
     } else {
