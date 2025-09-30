@@ -409,15 +409,17 @@ function playContent() {
     const streamingSection = document.getElementById('streamingSection');
     const streamingIframe = document.getElementById('streamingIframe');
     const providerSelect = document.getElementById('providerSelect');
+    const languageSelect = document.getElementById('languageSelect');
     const refreshButton = document.getElementById('refreshButton');
 
     playButton.style.display = 'none';
     streamingSection.style.display = 'block';
     streamingSection.scrollIntoView({ behavior: 'smooth' });
 
-    // Set initial provider
+    // Set initial provider and language
     const defaultProvider = providerSelect.value;
-    let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+    const selectedLanguage = languageSelect.value || 'en';
+    let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode, selectedLanguage);
     streamingIframe.src = currentSrc;
 
     function handleIframeLoad() {
@@ -442,7 +444,19 @@ function playContent() {
     // Provider change handler
     providerSelect.addEventListener('change', () => {
         const provider = providerSelect.value;
-        currentSrc = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
+        const lang = languageSelect.value || 'en';
+        currentSrc = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode, lang);
+        streamingIframe.src = currentSrc;
+        // Re-attach handlers in case changed
+        streamingIframe.onload = handleIframeLoad;
+        streamingIframe.onerror = handleIframeError;
+    });
+
+    // Language change handler
+    languageSelect.addEventListener('change', () => {
+        const provider = providerSelect.value;
+        const lang = languageSelect.value || 'en';
+        currentSrc = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode, lang);
         streamingIframe.src = currentSrc;
         // Re-attach handlers in case changed
         streamingIframe.onload = handleIframeLoad;
@@ -453,9 +467,6 @@ function playContent() {
     refreshButton.addEventListener('click', () => {
         streamingIframe.src = streamingIframe.src;
     });
-
-    // Store the prevent function for removal later
-    streamingIframe.preventFullscreen = preventFullscreen;
 }
 
 // Toggle between All, Movies and TV
