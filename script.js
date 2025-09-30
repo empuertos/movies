@@ -1,4 +1,4 @@
-const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300';
 
 const API_BASE_URL = 'https://tmbd.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
 
@@ -303,7 +303,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
             case 'videasy': return `https://videasy.tv/embed/tv/${contentId}/${season}/${episode}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`;
-         rename   case 'kisskh': return `https://kisskh.id/Drama/${slugifyTitle(currentTitle)}/Episode-${episode}?id=${contentId}&ep=${contentId}&page=0&pageSize=100`;
+            case 'kisskh': return `https://kisskh.id/Drama/${slugifyTitle(currentTitle)}/Episode-${episode}?id=${contentId}&ep=${contentId}&page=0&pageSize=100`;
             case 'solarmovies': return `https://solarmovies.ms/watch-tv/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}`;
             case 'freehdmovies': return `https://freehdmovies.to/watch-tv/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}`;
             default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Theme toggle functionality
     function initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         if (savedTheme === 'dark') {
             body.classList.add('dark-mode');
             themeToggle.textContent = '☀️';
