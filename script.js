@@ -305,6 +305,9 @@ async function loadEpisodes(seasonNumber) {
 
 function closeModal() {
     const modal = document.getElementById('movieModal');
+    const streamingIframe = document.getElementById('streamingIframe');
+    // Stop the video/audio by clearing the src
+    streamingIframe.src = '';
     modal.style.display = 'none';
 }
 
@@ -416,9 +419,10 @@ function playContent() {
     function handleIframeLoad() {
         // Optional: Check if content loaded (e.g., via postMessage or simple timeout check)
         console.log('Iframe loaded successfully');
-        // Auto full screen
-        if (streamingIframe.requestFullscreen) {
-            streamingIframe.requestFullscreen().catch(err => {
+        // Auto full screen the streaming section
+        const streamingSection = document.getElementById('streamingSection');
+        if (streamingSection.requestFullscreen) {
+            streamingSection.requestFullscreen().catch(err => {
                 console.log('Full screen request failed:', err);
             });
         }
