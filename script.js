@@ -415,14 +415,6 @@ function playContent() {
     streamingSection.style.display = 'block';
     streamingSection.scrollIntoView({ behavior: 'smooth' });
 
-    // Prevent fullscreen
-    function preventFullscreen() {
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
-        }
-    }
-    document.addEventListener('fullscreenchange', preventFullscreen);
-
     // Set initial provider
     const defaultProvider = providerSelect.value;
     let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
