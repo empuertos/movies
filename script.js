@@ -312,7 +312,6 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
             case 'videasy': return `https://videasy.tv/embed/tv/${contentId}/${season}/${episode}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`;
-            case 'kisskh': return `https://kisskh.id/Drama/${slugifyTitle(currentTitle)}/Episode-${episode}?id=${contentId}&ep=${contentId}&page=0&pageSize=100`;
             case 'solarmovies': return `https://solarmovies.ms/watch-tv/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}`;
             case 'freehdmovies': return `https://freehdmovies.to/watch-tv/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}`;
             default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
