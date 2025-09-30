@@ -3,7 +3,7 @@ const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300';
 const API_BASE_URL = 'https://tmbd.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
 
 let allContent = []; // Store fetched content for filtering
-let currentType = 'movie'; // 'movie' or 'tv'
+let currentType = 'all'; // 'all', 'movie' or 'tv'
 let currentSeason = 1;
 let currentEpisode = 1;
 let currentContentId = null;
@@ -18,7 +18,7 @@ function createContentCard(content) {
     const rating = content.vote_average ? (content.vote_average / 10).toFixed(1) : 'N/A';
     const genreNames = content.genre_ids ? content.genre_ids.map(id => getGenreName(id)).join(', ') : 'N/A';
     const title = content.title || content.name;
-    const type = currentType;
+    const type = content.title ? 'movie' : 'tv';
 
     return `
         <div class="movie-card" onclick="showContentDetails(${content.id}, '${type}')">
@@ -68,14 +68,23 @@ function populateContent(content) {
 async function fetchPopularContent() {
     try {
         let allResults = [];
-        const endpoint = currentType === 'movie' ? '/api/popular' : '/api/tv/popular';
-        for (let page = 1; page <= 1; page++) {  // Reduced to 1 page for faster initial load
-            const response = await fetch(`${API_BASE_URL}${endpoint}?page=${page}`);
+        if (currentType === 'all') {
+            const movieResponse = await fetch(`${API_BASE_URL}/api/popular?page=1`);
+            const tvResponse = await fetch(`${API_BASE_URL}/api/tv/popular?page=1`);
+            if (!movieResponse.ok || !tvResponse.ok) {
+                throw new Error('Proxy request failed');
+            }
+            const movieData = await movieResponse.json();
+            const tvData = await tvResponse.json();
+            allResults = movieData.results.concat(tvData.results);
+        } else {
+            const endpoint = currentType === 'movie' ? '/api/popular' : '/api/tv/popular';
+            const response = await fetch(`${API_BASE_URL}${endpoint}?page=1`);
             if (!response.ok) {
                 throw new Error('Proxy request failed');
             }
             const data = await response.json();
-            allResults = allResults.concat(data.results);
+            allResults = data.results;
         }
         populateContent(allResults);
     } catch (error) {
@@ -338,6 +347,7 @@ function playContent() {
 
     playButton.style.display = 'none';
     streamingSection.style.display = 'block';
+    streamingSection.scrollIntoView({ behavior: 'smooth' });
 
     // Set initial provider
     const defaultProvider = 'vidrock';
@@ -374,12 +384,19 @@ function playContent() {
     });
 }
 
-// Toggle between Movies and TV
+// Toggle between All, Movies and TV
 function toggleType(type) {
     currentType = type;
     // Update toggle buttons
     document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = type === 'movie' ? document.getElementById('movieToggle') : document.getElementById('tvToggle');
+    let activeBtn;
+    if (type === 'all') {
+        activeBtn = document.getElementById('allToggle');
+    } else if (type === 'movie') {
+        activeBtn = document.getElementById('movieToggle');
+    } else if (type === 'tv') {
+        activeBtn = document.getElementById('tvToggle');
+    }
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
