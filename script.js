@@ -494,31 +494,27 @@ function playContent() {
 let mockTranslationInterval = null;
 async function startMockTranslation(overlay) {
     let count = 0;
-    const baseTexts = [
-        "Hello, welcome to MovieHub!",
-        "Enjoy your movie in English.",
-        "This is a sample translation overlay.",
-        "Real-time translation coming soon."
-    ];
     const languages = ['es', 'fr', 'de', 'it', 'pt']; // Spanish, French, German, Italian, Portuguese
     const translatedTexts = [];
 
-    // Pre-translate all base texts to all languages
-    for (const text of baseTexts) {
+    // Translate the current movie/TV title to different languages
+    if (currentTitle) {
         for (const lang of languages) {
             try {
-                const response = await fetch(`/api/translate?text=${encodeURIComponent(text)}&target=${lang}&source=en`);
+                const response = await fetch(`/api/translate?text=${encodeURIComponent(currentTitle)}&target=${lang}&source=en`);
                 if (response.ok) {
                     const data = await response.json();
                     translatedTexts.push(data.data.translations[0].translatedText);
                 } else {
-                    translatedTexts.push(text); // Fallback to original
+                    translatedTexts.push(currentTitle); // Fallback to original
                 }
             } catch (error) {
                 console.error('Translation error:', error);
-                translatedTexts.push(text);
+                translatedTexts.push(currentTitle);
             }
         }
+    } else {
+        translatedTexts.push("No title available");
     }
 
     if (mockTranslationInterval) clearInterval(mockTranslationInterval);
