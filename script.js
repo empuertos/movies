@@ -279,7 +279,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}`;
             case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}`;
             case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}`;
-            case 'videasy': return `https://videasy.tv/tv/${contentId}/${season}/${episode}`;
+            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}`;
             case 'moviemaze': return `https://moviemaze.cc/watch/tv/${contentId}`;
             case '123moviesfree': return `https://ww7.123moviesfree.net/season/${slugifyTitle(currentTitle)}-season-${season}-${contentId}/`;
             default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}`;
@@ -304,7 +304,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
                 case 'frembed': return `https://frembed.lat/api/film.php?id=${contentId}`;
                 case 'uembed': return `http://uembed.xyz/embed/movie/?id=${contentId}`;
                 case 'warezcdn': return `https://embed.warezcdn.com/filme/${contentId}`;
-                case 'videasy': return `https://videasy.tv/movie/${contentId}`;
+                case 'videasy': return `https://player.videasy.net/movie/${contentId}`;
                 case 'moviemaze': return `https://moviemaze.cc/watch/movie/${contentId}`;
                 case '123moviesfree': return `https://ww7.123moviesfree.net/movie/${slugifyTitle(currentTitle)}-${contentId}/`;
                 default: return `https://vidrock.net/embed/movie/${contentId}`;
@@ -322,7 +322,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'embedsu': return `https://moviemaze.cc/watch/tv/${contentId}/${season}/${episode}`;
             case '111movies': return `https://111movies.com/tv/${imdbId}/${season}/${episode}`;
             case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}`;
-            case 'videasy': return `https://videasy.tv/tv/${imdbId}/${season}/${episode}`;
+            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}`;
             case 'solarmovies': return `https://solarmovies.ms/watch-tv/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}`;
             case 'freehdmovies': return `https://freehdmovies.to/watch-tv/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}`;
@@ -338,7 +338,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             case 'embedsu': return `https://moviemaze.cc/watch/movie/${contentId}`;
             case '111movies': return `https://111movies.com/movie/${imdbId}`;
             case 'vidlink': return `https://vidlink.pro/movie/${imdbId}`;
-            case 'videasy': return `https://videasy.tv/movie/${imdbId}`;
+            case 'videasy': return `https://player.videasy.net/movie/${contentId}`;
             case 'vidsrcto': return `https://vidsrc.to/embed/movie/${imdbId}`;
             case 'solarmovies': return `https://solarmovies.ms/watch-movie/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}`;
             case 'freehdmovies': return `https://freehdmovies.to/watch-movie/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}`;
