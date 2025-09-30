@@ -309,10 +309,6 @@ function closeModal() {
     // Stop the video/audio by clearing the src
     streamingIframe.src = '';
     modal.style.display = 'none';
-    // Remove fullscreen prevention listener
-    if (streamingIframe.preventFullscreen) {
-        document.removeEventListener('fullscreenchange', streamingIframe.preventFullscreen);
-    }
     // Exit fullscreen if active
     if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
@@ -323,7 +319,7 @@ function slugifyTitle(title) {
     return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
+function getProviderUrl(provider, imdbId, contentId, type, season, episode, language = 'en') {
     const isTV = type === 'tv';
     const contentType = isTV ? 'tv' : 'movie';
 
@@ -331,77 +327,77 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
         // Fallback to TMDB ID for providers that support it
         if (isTV) {
         switch(provider) {
-            case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'embedsoap': return `https://www.embedsoap.com/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'moviemaze': return `https://moviemaze.cc/watch/tv/${contentId}?ads=0&disable_ads=1`;
-            case '123moviesfree': return `https://ww7.123moviesfree.net/season/${slugifyTitle(currentTitle)}-season-${season}-${contentId}/?ads=0&disable_ads=1`;
-            default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
+            case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'embedsoap': return `https://www.embedsoap.com/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidplus': return `https://player.vidplus.to/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidking': return `https://www.vidking.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vixsrc': return `https://vixsrc.to/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'moviemaze': return `https://moviemaze.cc/watch/tv/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+            case '123moviesfree': return `https://ww7.123moviesfree.net/season/${slugifyTitle(currentTitle)}-season-${season}-${contentId}/?ads=0&disable_ads=1&lang=${language}`;
+            default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
         }
         } else {
             switch(provider) {
-                case 'vidrockembed': return `https://vidrock.net/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'vidsrcpro': return `https://vidsrc.pro/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'smashystream': return `https://smashy.stream/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'embedsoap': return `https://www.embedsoap.com/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'vidplus': return `https://player.vidplus.to/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'vidking': return `https://www.vidking.net/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'xprime': return `https://xprime.tv/watch/${contentId}?ads=0&disable_ads=1`;
-                case 'vixsrc': return `https://vixsrc.to/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'rivestream': return `https://rivestream.org/embed?type=movie&id=${contentId}&sendMetadata=true&ads=0&disable_ads=1`;
-                case 'vidzee': return `https://player.vidzee.wtf/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case '2embed': return `https://www.2embed.stream/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'moviekex': return `https://moviekex.online/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'vidpro': return `https://player.vidpro.top/embed/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'primesrc': return `https://primesrc.me/embed/movie?imdb=${contentId}&fallback=true&server_order=PrimeVid,Voe,Dood&ads=0&disable_ads=1`;
-                case 'moviesapi': return `https://moviesapi.club/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'frembed': return `https://frembed.lat/api/film.php?id=${contentId}&ads=0&disable_ads=1`;
-                case 'uembed': return `http://uembed.xyz/embed/movie/?id=${contentId}&ads=0&disable_ads=1`;
-                case 'warezcdn': return `https://embed.warezcdn.com/filme/${contentId}?ads=0&disable_ads=1`;
-                case 'videasy': return `https://player.videasy.net/movie/${contentId}?ads=0&disable_ads=1`;
-                case 'moviemaze': return `https://moviemaze.cc/watch/movie/${contentId}?ads=0&disable_ads=1`;
-                case '123moviesfree': return `https://ww7.123moviesfree.net/movie/${slugifyTitle(currentTitle)}-${contentId}/?ads=0&disable_ads=1`;
-                default: return `https://vidrock.net/embed/movie/${contentId}?ads=0&disable_ads=1`;
+                case 'vidrockembed': return `https://vidrock.net/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'vidsrcpro': return `https://vidsrc.pro/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'smashystream': return `https://smashy.stream/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'embedsoap': return `https://www.embedsoap.com/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'vidplus': return `https://player.vidplus.to/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'vidking': return `https://www.vidking.net/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'xprime': return `https://xprime.tv/watch/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'vixsrc': return `https://vixsrc.to/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'rivestream': return `https://rivestream.org/embed?type=movie&id=${contentId}&sendMetadata=true&ads=0&disable_ads=1&lang=${language}`;
+                case 'vidzee': return `https://player.vidzee.wtf/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case '2embed': return `https://www.2embed.stream/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'moviekex': return `https://moviekex.online/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'vidpro': return `https://player.vidpro.top/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'primesrc': return `https://primesrc.me/embed/movie?imdb=${contentId}&fallback=true&server_order=PrimeVid,Voe,Dood&ads=0&disable_ads=1&lang=${language}`;
+                case 'moviesapi': return `https://moviesapi.club/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'frembed': return `https://frembed.lat/api/film.php?id=${contentId}&ads=0&disable_ads=1&lang=${language}`;
+                case 'uembed': return `http://uembed.xyz/embed/movie/?id=${contentId}&ads=0&disable_ads=1&lang=${language}`;
+                case 'warezcdn': return `https://embed.warezcdn.com/filme/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'videasy': return `https://player.videasy.net/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case 'moviemaze': return `https://moviemaze.cc/watch/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+                case '123moviesfree': return `https://ww7.123moviesfree.net/movie/${slugifyTitle(currentTitle)}-${contentId}/?ads=0&disable_ads=1&lang=${language}`;
+                default: return `https://vidrock.net/embed/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
             }
         }
     }
 
     if (isTV) {
         switch(provider) {
-            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidrock': return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidsrc': return `https://vidsrc.me/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidfast': return `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/tv/${contentId}/${season}/${episode}?server=2&ads=0&disable_ads=1`;
-            case 'embedsu': return `https://moviemaze.cc/watch/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case '111movies': return `https://111movies.com/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
-            case 'solarmovies': return `https://solarmovies.ms/watch-tv/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}?ads=0&disable_ads=1`;
-            case 'freehdmovies': return `https://freehdmovies.to/watch-tv/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}?ads=0&disable_ads=1`;
-            default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1`;
+            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidrock': return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidsrc': return `https://vidsrc.me/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidfast': return `https://vidfast.pro/tv/${imdbId}/${season}/${episode}?autoPlay=true&ads=0&disable_ads=1&lang=${language}`;
+            case 'autoembed': return `https://player.autoembed.cc/embed/tv/${contentId}/${season}/${episode}?server=2&ads=0&disable_ads=1&lang=${language}`;
+            case 'embedsu': return `https://moviemaze.cc/watch/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case '111movies': return `https://111movies.com/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidlink': return `https://vidlink.pro/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'videasy': return `https://player.videasy.net/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidsrcto': return `https://vidsrc.to/embed/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
+            case 'solarmovies': return `https://solarmovies.ms/watch-tv/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'freehdmovies': return `https://freehdmovies.to/watch-tv/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0&disable_ads=1&lang=${language}`;
         }
     } else {
         switch(provider) {
-            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'vidrock': return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'vidsrc': return `https://vidsrc.me/embed/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'vidfast': return `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1`;
-            case 'autoembed': return `https://player.autoembed.cc/embed/movie/${imdbId}?server=2&ads=0&disable_ads=1`;
-            case 'embedsu': return `https://moviemaze.cc/watch/movie/${contentId}?ads=0&disable_ads=1`;
-            case '111movies': return `https://111movies.com/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'vidlink': return `https://vidlink.pro/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'videasy': return `https://player.videasy.net/movie/${contentId}?ads=0&disable_ads=1`;
-            case 'vidsrcto': return `https://vidsrc.to/embed/movie/${imdbId}?ads=0&disable_ads=1`;
-            case 'solarmovies': return `https://solarmovies.ms/watch-movie/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}?ads=0&disable_ads=1`;
-            case 'freehdmovies': return `https://freehdmovies.to/watch-movie/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}?ads=0&disable_ads=1`;
-            default: return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1`;
+            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidrock': return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidsrc': return `https://vidsrc.me/embed/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidfast': return `https://vidfast.pro/movie/${imdbId}?autoPlay=true&ads=0&disable_ads=1&lang=${language}`;
+            case 'autoembed': return `https://player.autoembed.cc/embed/movie/${imdbId}?server=2&ads=0&disable_ads=1&lang=${language}`;
+            case 'embedsu': return `https://moviemaze.cc/watch/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+            case '111movies': return `https://111movies.com/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidlink': return `https://vidlink.pro/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'videasy': return `https://player.videasy.net/movie/${contentId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'vidsrcto': return `https://vidsrc.to/embed/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'solarmovies': return `https://solarmovies.ms/watch-movie/watch-${slugifyTitle(currentTitle)}-free-${contentId}.${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            case 'freehdmovies': return `https://freehdmovies.to/watch-movie/watch-${slugifyTitle(currentTitle)}-full-${contentId}.${imdbId}?ads=0&disable_ads=1&lang=${language}`;
+            default: return `https://vidrock.net/movie/${imdbId}?ads=0&disable_ads=1&lang=${language}`;
         }
     }
 }
@@ -442,7 +438,13 @@ function playContent() {
         alert('This provider is unavailable.');
     }
 
-    streamingIframe.onload = handleIframeLoad;
+    streamingIframe.onload = () => {
+        console.log('Iframe loaded successfully');
+        // Automatically request fullscreen
+        if (streamingIframe.requestFullscreen) {
+            streamingIframe.requestFullscreen().catch(err => console.log('Error requesting fullscreen:', err));
+        }
+    };
     streamingIframe.onerror = handleIframeError;
 
     // Provider change handler
