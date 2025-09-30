@@ -410,7 +410,7 @@ function playContent() {
     const providerSelect = document.getElementById('providerSelect');
     const refreshButton = document.getElementById('refreshButton');
 
-    // Create or get translation overlay div
+    // Create or get translation overlay div inside iframe container for fullscreen visibility
     let translationOverlay = document.getElementById('translationOverlay');
     if (!translationOverlay) {
         translationOverlay = document.createElement('div');
@@ -423,7 +423,7 @@ function playContent() {
         translationOverlay.style.fontSize = '18px';
         translationOverlay.style.textShadow = '2px 2px 4px #000';
         translationOverlay.style.pointerEvents = 'none';
-        translationOverlay.style.zIndex = '1000';
+        translationOverlay.style.zIndex = '2147483647'; // Max z-index for fullscreen overlay
         streamingSection.style.position = 'relative';
         streamingSection.appendChild(translationOverlay);
     }
@@ -459,6 +459,23 @@ function playContent() {
     };
     streamingIframe.onerror = handleIframeError;
 
+    // Listen for fullscreen change to adjust overlay visibility and position
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === streamingIframe) {
+            // When iframe is fullscreen, ensure overlay is visible and positioned correctly
+            translationOverlay.style.position = 'fixed';
+            translationOverlay.style.bottom = '50px';
+            translationOverlay.style.width = '100%';
+            translationOverlay.style.zIndex = '2147483647';
+        } else {
+            // Reset overlay position when not fullscreen
+            translationOverlay.style.position = 'absolute';
+            translationOverlay.style.bottom = '50px';
+            translationOverlay.style.width = '100%';
+            translationOverlay.style.zIndex = '1000';
+        }
+    });
+
     // Provider change handler
     providerSelect.addEventListener('change', () => {
         const provider = providerSelect.value;
@@ -474,20 +491,39 @@ function playContent() {
     });
 }
 
-// Mock translation overlay updater (simulate real-time translation)
 let mockTranslationInterval = null;
-function startMockTranslation(overlay) {
+async function startMockTranslation(overlay) {
     let count = 0;
-    const sampleTexts = [
+    const baseTexts = [
         "Hello, welcome to MovieHub!",
         "Enjoy your movie in English.",
-        "Panoorin ang pelikula sa Filipino.",
         "This is a sample translation overlay.",
         "Real-time translation coming soon."
     ];
+    const languages = ['es', 'fr', 'de', 'it', 'pt']; // Spanish, French, German, Italian, Portuguese
+    const translatedTexts = [];
+
+    // Pre-translate all base texts to all languages
+    for (const text of baseTexts) {
+        for (const lang of languages) {
+            try {
+                const response = await fetch(`/api/translate?text=${encodeURIComponent(text)}&target=${lang}&source=en`);
+                if (response.ok) {
+                    const data = await response.json();
+                    translatedTexts.push(data.data.translations[0].translatedText);
+                } else {
+                    translatedTexts.push(text); // Fallback to original
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                translatedTexts.push(text);
+            }
+        }
+    }
+
     if (mockTranslationInterval) clearInterval(mockTranslationInterval);
     mockTranslationInterval = setInterval(() => {
-        overlay.textContent = sampleTexts[count % sampleTexts.length];
+        overlay.textContent = translatedTexts[count % translatedTexts.length];
         count++;
     }, 3000);
 }
