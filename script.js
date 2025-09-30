@@ -187,7 +187,10 @@ async function showContentDetails(contentId, type) {
 
         // Handle trailer
         trailerIframe.style.display = 'none';
-        const trailer = videos.results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+        let trailer = videos.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+        if (!trailer) {
+            trailer = videos.results.find(v => v.site === 'YouTube');
+        }
         if (trailer) {
             trailerIframe.src = `https://www.youtube.com/embed/${trailer.key}`;
             trailerIframe.style.display = 'block';
