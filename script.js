@@ -410,6 +410,7 @@ function playContent() {
     const streamingIframe = document.getElementById('streamingIframe');
     const providerSelect = document.getElementById('providerSelect');
     const languageSelect = document.getElementById('languageSelect');
+    const subtitleButton = document.getElementById('subtitleButton');
     const refreshButton = document.getElementById('refreshButton');
 
     playButton.style.display = 'none';
@@ -461,6 +462,12 @@ function playContent() {
         // Re-attach handlers in case changed
         streamingIframe.onload = handleIframeLoad;
         streamingIframe.onerror = handleIframeError;
+    });
+
+    // Subtitle handler
+    subtitleButton.addEventListener('click', () => {
+        const searchQuery = encodeURIComponent(currentTitle);
+        window.open(`https://www.opensubtitles.com/en/search?q=${searchQuery}`, '_blank');
     });
 
     // Refresh handler
