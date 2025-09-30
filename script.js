@@ -309,6 +309,10 @@ function closeModal() {
     // Stop the video/audio by clearing the src
     streamingIframe.src = '';
     modal.style.display = 'none';
+    // Exit fullscreen if active
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
+    }
 }
 
 function slugifyTitle(title) {
