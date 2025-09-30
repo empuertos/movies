@@ -309,6 +309,10 @@ function closeModal() {
     // Stop the video/audio by clearing the src
     streamingIframe.src = '';
     modal.style.display = 'none';
+    // Remove fullscreen prevention listener
+    if (streamingIframe.preventFullscreen) {
+        document.removeEventListener('fullscreenchange', streamingIframe.preventFullscreen);
+    }
     // Exit fullscreen if active
     if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
@@ -415,6 +419,14 @@ function playContent() {
     streamingSection.style.display = 'block';
     streamingSection.scrollIntoView({ behavior: 'smooth' });
 
+    // Prevent fullscreen
+    function preventFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
+        }
+    }
+    document.addEventListener('fullscreenchange', preventFullscreen);
+
     // Set initial provider
     const defaultProvider = providerSelect.value;
     let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
@@ -447,6 +459,9 @@ function playContent() {
     refreshButton.addEventListener('click', () => {
         streamingIframe.src = streamingIframe.src;
     });
+
+    // Store the prevent function for removal later
+    streamingIframe.preventFullscreen = preventFullscreen;
 }
 
 // Toggle between All, Movies and TV
