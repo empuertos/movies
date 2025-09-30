@@ -12,6 +12,12 @@ let currentTitle = null;
 let seasons = [];
 let episodes = [];
 
+// Provider lists
+const providersAlwaysAvailableMovie = ['vidrockembed', 'vidsrcpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'xprime', 'vixsrc', 'rivestream', 'vidzee', '2embed', 'moviekex', 'vidpro', 'primesrc', 'moviesapi', 'frembed', 'uembed', 'warezcdn', 'videasy', 'moviemaze', '123moviesfree'];
+const providersRequiringImdbMovie = ['vidsrccc', 'vidrock', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
+const providersAlwaysAvailableTV = ['vidrockembed', 'vidsrcpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'vixsrc', 'videasy', 'moviemaze', '123moviesfree'];
+const providersRequiringImdbTV = ['vidsrccc', 'vidrock', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
+
 // Function to create content card HTML (works for both movies and TV)
 function createContentCard(content) {
     const year = content.release_date ? content.release_date.split('-')[0] : (content.first_air_date ? content.first_air_date.split('-')[0] : 'N/A');
@@ -174,6 +180,24 @@ async function showContentDetails(contentId, type) {
             }
         }
 
+        // Populate provider select based on availability
+        const providerSelect = document.getElementById('providerSelect');
+        providerSelect.innerHTML = '';
+        let availableProviders = type === 'tv' ? [...providersAlwaysAvailableTV] : [...providersAlwaysAvailableMovie];
+        if (currentImdbId) {
+            availableProviders.push(... (type === 'tv' ? providersRequiringImdbTV : providersRequiringImdbMovie));
+        }
+        availableProviders.forEach(provider => {
+            const option = document.createElement('option');
+            option.value = provider;
+            option.textContent = provider.charAt(0).toUpperCase() + provider.slice(1).replace(/([A-Z])/g, ' $1');
+            providerSelect.appendChild(option);
+        });
+        // Set default provider
+        if (availableProviders.length > 0) {
+            providerSelect.value = availableProviders[0];
+        }
+
         // Populate details
         const title = details.title || details.name || 'Unknown Title';
         currentTitle = title;
@@ -222,7 +246,6 @@ async function showContentDetails(contentId, type) {
         playButton.style.display = 'block';
 
         // Set up provider change handler for automatic switching
-        const providerSelect = document.getElementById('providerSelect');
         providerSelect.addEventListener('change', () => {
             const provider = providerSelect.value;
             const streamingIframe = document.getElementById('streamingIframe');
@@ -364,13 +387,19 @@ function playContent() {
     streamingSection.scrollIntoView({ behavior: 'smooth' });
 
     // Set initial provider
-    const defaultProvider = 'vidrock';
+    const defaultProvider = providerSelect.value;
     let currentSrc = getProviderUrl(defaultProvider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
     streamingIframe.src = currentSrc;
 
     function handleIframeLoad() {
         // Optional: Check if content loaded (e.g., via postMessage or simple timeout check)
         console.log('Iframe loaded successfully');
+        // Auto full screen
+        if (streamingIframe.requestFullscreen) {
+            streamingIframe.requestFullscreen().catch(err => {
+                console.log('Full screen request failed:', err);
+            });
+        }
     }
 
     function handleIframeError() {
