@@ -203,7 +203,29 @@ async function showContentDetails(contentId, type) {
         currentTitle = title;
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalOverview').textContent = details.overview || 'No overview available.';
-        document.getElementById('modalPoster').src = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/200x300?text=No+Image';
+        // Handle poster caching
+        const posterElement = document.getElementById('modalPoster');
+        const posterKey = `poster_${contentId}`;
+        const cachedPoster = localStorage.getItem(posterKey);
+        if (cachedPoster) {
+            posterElement.src = cachedPoster;
+        } else {
+            const posterUrl = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/200x300?text=No+Image';
+            posterElement.src = posterUrl;
+            // Cache the poster
+            if (details.poster_path) {
+                fetch(posterUrl)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            localStorage.setItem(posterKey, reader.result);
+                        };
+                        reader.readAsDataURL(blob);
+                    })
+                    .catch(err => console.log('Failed to cache poster:', err));
+            }
+        }
         const year = details.release_date ? details.release_date.split('-')[0] : (details.first_air_date ? details.first_air_date.split('-')[0] : 'N/A');
         const genres = details.genres ? details.genres.map(g => g.name).join(', ') : 'N/A';
         const rating = details.vote_average ? (details.vote_average / 10).toFixed(1) : 'N/A';
