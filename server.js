@@ -4,9 +4,8 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = 3000;
-const TMDB_API_KEY = process.env.TMDB_API_KEY || 'your-local-key-here'; // Set via .env or environment variable for security
+// TMDB API key is stored in Cloudflare Worker secret variable
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const GOOGLE_TRANSLATE_API_KEY = 'AIzaSyDdOQIE8dGG4gUStS36v3UxYETtwtT4fQo'; // Provided Google API key
 
 // Middleware
 app.use(cors());
@@ -196,13 +195,8 @@ app.get('/api/translate', async (req, res) => {
         if (!text) {
             return res.status(400).json({ error: 'Text to translate is required' });
         }
-        const translateUrl = `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_API_KEY}&q=${encodeURIComponent(text)}&target=${target}&source=${source}`;
-        const response = await fetch(translateUrl);
-        if (!response.ok) {
-            throw new Error('Translation API request failed');
-        }
-        const data = await response.json();
-        res.json(data);
+        // Google Translate API key removed for security
+        res.status(503).json({ error: 'Translation service unavailable' });
     } catch (error) {
         console.error('Error translating text:', error);
         res.status(500).json({ error: 'Failed to translate text' });
