@@ -13,9 +13,9 @@ let seasons = [];
 let episodes = [];
 
 // Provider lists
-const providersAlwaysAvailableMovie = ['vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'xprime', 'vixsrc', 'rivestream', 'vidzee', '2embed', 'moviekex', 'vidpro', 'primesrc', 'moviesapi', 'frembed', 'uembed', 'warezcdn', 'videasy', 'moviemaze', '123moviesfree'];
+const providersAlwaysAvailableMovie = ['vidora', 'vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'xprime', 'vixsrc', 'rivestream', 'vidzee', '2embed', 'moviekex', 'vidpro', 'primesrc', 'moviesapi', 'frembed', 'uembed', 'warezcdn', 'videasy', 'moviemaze', '123moviesfree'];
 const providersRequiringImdbMovie = ['vidsrccc', 'vidrock', 'autoembedpro', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
-const providersAlwaysAvailableTV = ['vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'vixsrc', 'videasy', 'moviemaze', '123moviesfree'];
+const providersAlwaysAvailableTV = ['vidora', 'vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'vixsrc', 'videasy', 'moviemaze', '123moviesfree'];
 const providersRequiringImdbTV = ['vidsrccc', 'vidrock', 'autoembedpro', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
 
 // Function to create content card HTML (works for both movies and TV)
@@ -328,6 +328,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
         // Fallback to TMDB ID for providers that support it
         if (isTV) {
             switch(provider) {
+                case 'vidora': return `https://vidora.su/tv/${contentId}/${season}/${episode}?colour=1100ff&autoplay=true&autonextepisode=true&backbutton=https%3A%2F%2Fvidora.su%2F&pausescreen=true`;
                 case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
                 case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
                 case 'smashystream': return `https://smashy.stream/embed/tv/${contentId}/${season}/${episode}?ads=0&disable_ads=1`;
@@ -342,6 +343,7 @@ function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
             }
         } else {
             switch(provider) {
+                case 'vidora': return `https://vidora.su/movie/${contentId}?colour=1100ff&autoplay=true&autonextepisode=true&backbutton=https%3A%2F%2Fvidora.su%2F&pausescreen=true`;
                 case 'vidrockembed': return `https://vidrock.net/embed/movie/${contentId}?ads=0&disable_ads=1`;
                 case 'vidsrcpro': return `https://vidsrc.pro/embed/movie/${contentId}?ads=0&disable_ads=1`;
                 case 'smashystream': return `https://smashy.stream/embed/movie/${contentId}?ads=0&disable_ads=1`;
