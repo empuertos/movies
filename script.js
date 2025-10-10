@@ -75,7 +75,7 @@ async function fetchPopularContent() {
     try {
         let allResults = [];
         if (currentType === 'all') {
-            const movieResponse = await fetch(`${API_BASE_URL}/api/popular?page=1`);
+            const movieResponse = await fetch(`${API_BASE_URL}/api/movie/popular?page=1`);
             const tvResponse = await fetch(`${API_BASE_URL}/api/tv/popular?page=1`);
             if (!movieResponse.ok || !tvResponse.ok) {
                 throw new Error('Proxy request failed');
@@ -84,7 +84,7 @@ async function fetchPopularContent() {
             const tvData = await tvResponse.json();
             allResults = movieData.results.concat(tvData.results);
         } else {
-            const endpoint = currentType === 'movie' ? '/api/popular' : '/api/tv/popular';
+            const endpoint = currentType === 'movie' ? '/api/movie/popular' : '/api/tv/popular';
             if (currentType === 'movie') {
                 allResults = [];
                 for (let page = 1; page <= 5; page++) {
@@ -121,7 +121,7 @@ async function searchContent(query) {
 
     try {
         // Fetch both movie and TV search results concurrently
-        const movieResponsePromise = fetch(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
+        const movieResponsePromise = fetch(`${API_BASE_URL}/api/search/movie?query=${encodeURIComponent(query)}`);
         const tvResponsePromise = fetch(`${API_BASE_URL}/api/search/tv?query=${encodeURIComponent(query)}`);
 
         const [movieResponse, tvResponse] = await Promise.all([movieResponsePromise, tvResponsePromise]);
@@ -160,20 +160,20 @@ async function showContentDetails(contentId, type) {
     const episodeSelect = document.getElementById('episodeSelect');
 
     try {
-        const endpoint = type === 'movie' ? '/api/details' : '/api/tv/details';
-        const param = type === 'movie' ? 'movie_id' : 'tv_id';
-        const response = await fetch(`${API_BASE_URL}${endpoint}?${param}=${contentId}`);
-        if (!response.ok) {
+        const detailsResponse = await fetch(`${API_BASE_URL}/api/${type}/${contentId}`);
+        const videosResponse = await fetch(`${API_BASE_URL}/api/${type}/${contentId}/videos`);
+        if (!detailsResponse.ok || !videosResponse.ok) {
             throw new Error(`Failed to fetch ${type} details`);
         }
-        const { details, videos } = await response.json();
+        const details = await detailsResponse.json();
+        const videos = await videosResponse.json();
 
         // Set IMDB ID for providers
         if (type === 'movie') {
             currentImdbId = details.imdb_id || null;
         } else {
             // For TV shows, get IMDB ID from external IDs
-            const externalResponse = await fetch(`${API_BASE_URL}/api/tv/external?tv_id=${contentId}`);
+            const externalResponse = await fetch(`${API_BASE_URL}/api/tv/${contentId}/external_ids`);
             if (externalResponse.ok) {
                 const externalData = await externalResponse.json();
                 currentImdbId = externalData.imdb_id || null;
@@ -247,9 +247,10 @@ async function showContentDetails(contentId, type) {
         // Handle seasons/episodes for TV shows
         if (type === 'tv') {
             // Load seasons
-            const seasonsResponse = await fetch(`${API_BASE_URL}/api/seasons?tv_id=${contentId}`);
+            const seasonsResponse = await fetch(`${API_BASE_URL}/api/tv/${contentId}`);
             if (seasonsResponse.ok) {
-                seasons = await seasonsResponse.json();
+                const tvData = await seasonsResponse.json();
+                seasons = tvData.seasons || [];
                 seasonSelect.innerHTML = seasons.map(season => `<option value="${season.season_number}">${season.name}</option>`).join('');
                 seasonSelect.style.display = 'inline-block';
                 episodeSelect.style.display = 'inline-block';
@@ -289,11 +290,12 @@ async function loadEpisodes(seasonNumber) {
     const episodeSelect = document.getElementById('episodeSelect');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/episodes?tv_id=${currentContentId}&season=${seasonNumber}`);
+        const response = await fetch(`${API_BASE_URL}/api/tv/${currentContentId}/season/${seasonNumber}`);
         if (!response.ok) {
             throw new Error('Failed to fetch episodes');
         }
-        episodes = await response.json();
+        const seasonData = await response.json();
+        episodes = seasonData.episodes || [];
         episodeSelect.innerHTML = episodes.map(episode => `<option value="${episode.episode_number}">Episode ${episode.episode_number}: ${episode.name}</option>`).join('');
         currentSeason = seasonNumber;
         currentEpisode = episodes.length > 0 ? episodes[0].episode_number : 1;
