@@ -1,46 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Meta tags for character set, viewport, and SEO -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A professional landing page example.">
-    
-    <title>Welcome to Our Website</title>
-    
-    <!-- Link to Google Fonts for a professional look -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Under Maintenance</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-    <!-- Link to our external stylesheet -->
-    <link rel="stylesheet" href="style.css">
+        :root {
+            --primary-color: #0056b3;
+            --text-color: #212529;
+            --subtle-text-color: #6c757d;
+            --bg-color: #f8f9fa;
+            --card-bg-color: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.075);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 650px;
+            padding: 3rem;
+            background: var(--card-bg-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid #dee2e6;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            color: var(--subtle-text-color);
+        }
+
+        .redirect-info {
+            font-size: 0.95rem;
+            color: var(--subtle-text-color);
+            margin-top: 2.5rem;
+            border-top: 1px solid #e9ecef;
+            padding-top: 1.5rem;
+        }
+
+        .redirect-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .redirect-info a:hover {
+            text-decoration: underline;
+        }
+
+        #countdown {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+    </style>
 </head>
 <body>
 
-    <main class="container">
-        <header class="header">
-            <!-- Replace with your actual logo file -->
-            <img src="https://via.placeholder.com/150x50.png?text=YourLogo" alt="Your Company Logo" class="logo">
-            <h1>Building Something Amazing</h1>
-        </header>
-
-        <section class="content">
+    <div class="container">
+        <!-- IMPORTANT: Replace with your logo -->
+        <img src="https://via.placeholder.com/150x50.png?text=YourLogo" alt="Your Company Logo" class="logo">
+        
+        <h1>We'll be back soon!</h1>
+        
+        <p>
+            Our site is currently undergoing scheduled maintenance and upgrades. We're working hard to make our website better for you and will be back online shortly.
+        </p>
+        
+        <div class="redirect-info">
             <p>
-                This is a clean, professional HTML structure. We've separated our HTML, CSS, and JavaScript into different files for better organization and maintainability.
+                For real-time updates, please follow us on <a href="https://twitter.com/yourprofile" target="_blank" rel="noopener noreferrer">Twitter</a>.
             </p>
-            <div class="cta-container">
-                <a href="#learn-more" class="button">Learn More</a>
-            </div>
-        </section>
+            <p>
+                You will be redirected to our status page in <span id="countdown">15</span> seconds.
+                <br>
+                If you are not redirected, <a id="redirect-link" href="https://your-temporary-site.com">click here</a>.
+            </p>
+        </div>
+    </div>
 
-        <footer class="footer">
-            <p id="copyright-year">&copy; Your Company. All rights reserved.</p>
-        </footer>
-    </main>
+    <script>
+        (function() {
+            // --- Configuration ---
+            const redirectUrl = "https://your-temporary-site.com"; // <-- Set your temporary URL (e.g., a status page, blog, or social profile)
+            const countdownDuration = 15; // seconds
+            // -------------------
 
-    <!-- Link to our external JavaScript file, placed before the closing </body> tag -->
-    <script src="script.js"></script>
+            const countdownElement = document.getElementById('countdown');
+            const redirectLink = document.getElementById('redirect-link');
+            
+            if (!countdownElement || !redirectLink) return;
+
+            redirectLink.href = redirectUrl;
+            let timeLeft = countdownDuration;
+
+            const countdownTimer = setInterval(() => {
+                if (timeLeft <= 1) {
+                    clearInterval(countdownTimer);
+                    window.location.href = redirectUrl;
+                }
+                timeLeft -= 1;
+                countdownElement.textContent = timeLeft;
+            }, 1000);
+        })();
+    </script>
 
 </body>
 </html>
