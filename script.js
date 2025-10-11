@@ -1,6 +1,6 @@
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300';
 
-const API_BASE_URL = 'https://tmbd.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
+const API_BASE_URL = 'https://movies-main.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
 
 let allContent = []; // Store fetched content for filtering
 let currentType = 'movie'; // 'all', 'movie' or 'tv'
