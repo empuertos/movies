@@ -1,122 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta tags for character set, viewport, and SEO -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MovieHub - Discover Your Next Favorite Film</title>
+    <meta name="description" content="A professional landing page example.">
+    
+    <title>Welcome to Our Website</title>
+    
+    <!-- Link to Google Fonts for a professional look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Link to our external stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="favicon.ico">
-    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>MovieHub</h1>
-            <div class="toggle-buttons">
-                <button id="allToggle" class="toggle-btn active" data-type="all">All</button>
-                <button id="movieToggle" class="toggle-btn" data-type="movie">Movies</button>
-                <button id="tvToggle" class="toggle-btn" data-type="tv">TV Shows</button>
-            </div>
-            <button id="themeToggle" class="theme-btn">🌙</button>
-            <div class="search-bar">
-                <input type="text" placeholder="Search movies or TV shows...">
-                <button>Search</button>
-            </div>
-        </div>
 
-    <main>
-        <section id="hero">
-            <div class="container">
-                <h2>Welcome to MovieHub</h2>
-                <p>Discover the latest movies, classics, and everything in between.</p>
+    <main class="container">
+        <header class="header">
+            <!-- Replace with your actual logo file -->
+            <img src="https://via.placeholder.com/150x50.png?text=YourLogo" alt="Your Company Logo" class="logo">
+            <h1>Building Something Amazing</h1>
+        </header>
+
+        <section class="content">
+            <p>
+                This is a clean, professional HTML structure. We've separated our HTML, CSS, and JavaScript into different files for better organization and maintainability.
+            </p>
+            <div class="cta-container">
+                <a href="#learn-more" class="button">Learn More</a>
             </div>
         </section>
 
-        <section id="content">
-            <div class="container">
-                <h2>Featured Content</h2>
-                <div class="movie-grid" id="movieGrid">
-                    <!-- Content will be populated dynamically -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Content Details Modal -->
-        <div id="movieModal" class="modal">
-            <div class="modal-backdrop" onclick="closeModal()"></div>
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <div class="movie-details">
-                    <img id="modalPoster" src="" alt="Content Poster" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
-                    <div class="details-text">
-                        <h2 id="modalTitle"></h2>
-                        <p id="modalOverview"></p>
-                        <p id="modalInfo"></p>
-                    </div>
-                </div>
-                <div id="trailerSection">
-                    <h3>Trailer</h3>
-                    <iframe id="trailerIframe" width="100%" height="400" frameborder="0" allowfullscreen style="display: none;"></iframe>
-                </div>
-                <button id="playButton" onclick="playContent()">Play Full Movie</button>
-                <div id="streamingSection" style="display: none;">
-                    <h3>Watch Content</h3>
-                    <div class="provider-controls">
-                        <select id="seasonSelect" style="display: none;">
-                            <!-- Seasons populated dynamically -->
-                        </select>
-                        <select id="episodeSelect" style="display: none;">
-                            <!-- Episodes populated dynamically -->
-                        </select>
-                        <select id="providerSelect">
-                            <option value="vidrock">VidRock</option>
-                            <option value="vidsrc">VidSrc</option>
-                            <option value="autoembedpro">Autoembedpro</option>
-                            <option value="vidsrccc">VidSrc CC</option>
-                            <option value="vidfast">VidFast</option>
-                            <option value="autoembed">AutoEmbed</option>
-                            <option value="embedsu">Embed.su</option>
-                            <option value="111movies">111Movies</option>
-                            <option value="vidlink">VidLink</option>
-                            <option value="videasy">VidEasy</option>
-                            <option value="vidsrcto">VidSrc.to</option>
-                            <option value="vidrockembed">VidRock Embed</option>
-                            <option value="vidsrcpro">VidSrc Pro</option>
-                            <option value="smashystream">SmashyStream</option>
-                            <option value="embedsoap">EmbedSoap</option>
-                            <option value="vidplus">VidPlus</option>
-                            <option value="vidking">VidKing</option>
-                            <option value="xprime">XPrime</option>
-                            <option value="vixsrc">VixSrc</option>
-                            <option value="rivestream">RiveStream</option>
-                            <option value="vidzee">VidZee</option>
-                            <option value="2embed">2Embed</option>
-                            <option value="moviekex">MovieKex</option>
-                            <option value="vidpro">VidPro</option>
-                            <option value="primesrc">PrimeSrc</option>
-                            <option value="moviesapi">MoviesAPI</option>
-                            <option value="frembed">Frembed</option>
-                            <option value="uembed">UEmbed</option>
-                            <option value="warezcdn">WarezCDN</option>
-                            <option value="solarmovies">SolarMovies</option>
-                            <option value="freehdmovies">FreeHDMovies</option>
-                            <option value="moviemaze">MovieMaze</option>
-                            <option value="123moviesfree">123MoviesFree</option>
-                        </select>
-                        <button id="refreshButton">Refresh</button>
-                    </div>
-                    <iframe id="streamingIframe" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
+        <footer class="footer">
+            <p id="copyright-year">&copy; Your Company. All rights reserved.</p>
+        </footer>
     </main>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 MovieHub. All rights reserved.</p>
-        </div>
-    </footer>
-
+    <!-- Link to our external JavaScript file, placed before the closing </body> tag -->
     <script src="script.js"></script>
+
 </body>
 </html>
