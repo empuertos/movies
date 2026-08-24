@@ -19,11 +19,18 @@ const providersRequiringImdbMovie = ['vidsrccc', 'vidrock', 'autoembedpro', 'vid
 const providersAlwaysAvailableTV = ['vidora', 'vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'vixsrc', 'videasy', 'moviemaze', '123moviesfree'];
 const providersRequiringImdbTV = ['vidsrccc', 'vidrock', 'autoembedpro', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
 
-// Create content card
+// Format rating - shows out of 10 with one decimal
+function formatRating(voteAverage) {
+    if (!voteAverage || voteAverage === 0) return 'N/A';
+    const rating = (voteAverage / 10 * 10).toFixed(1);
+    return `${rating}/10 ⭐`;
+}
+
+// Create content card with better rating display
 function createContentCard(content) {
     const year = content.release_date ? content.release_date.split('-')[0] : (content.first_air_date ? content.first_air_date.split('-')[0] : 'N/A');
-    const rating = content.vote_average ? (content.vote_average / 10).toFixed(1) : 'N/A';
-    const genreNames = content.genre_ids ? content.genre_ids.map(id => getGenreName(id)).join(', ') : 'N/A';
+    const rating = content.vote_average ? formatRating(content.vote_average) : 'N/A';
+    const genreNames = content.genre_ids ? content.genre_ids.map(id => getGenreName(id)).slice(0, 2).join(', ') : 'N/A';
     const title = content.title || content.name;
     const type = content.title ? 'movie' : 'tv';
 
@@ -31,7 +38,7 @@ function createContentCard(content) {
         <div class="movie-card" onclick="showContentDetails(${content.id}, '${type}')">
             <img src="${content.poster_path ? IMAGE_BASE_URL + content.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${title}" loading="lazy">
             <h3>${title}</h3>
-            <p>${year} | ${genreNames} | ${rating}</p>
+            <p>${year} · ${genreNames} · <span class="rating-star">${rating}</span></p>
         </div>
     `;
 }
@@ -49,15 +56,18 @@ function getGenreName(genreId) {
 
 function populateContent(content) {
     const movieGrid = document.getElementById('movieGrid');
+    const contentCount = document.getElementById('contentCount');
     if (!movieGrid) return;
     
     if (!content || content.length === 0) {
-        movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">No content available. Please try again later.</p>';
+        movieGrid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No content available. Please try again later.</p>';
+        if (contentCount) contentCount.textContent = '';
         return;
     }
     
     movieGrid.innerHTML = content.map(createContentCard).join('');
     allContent = content;
+    if (contentCount) contentCount.textContent = `${content.length} titles`;
 }
 
 // Fetch with timeout
@@ -80,17 +90,20 @@ async function fetchWithTimeout(url, options = {}, timeout = 15000) {
 // Fetch popular content directly from TMDB
 async function fetchPopularContent() {
     const movieGrid = document.getElementById('movieGrid');
-    movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Loading content...</p>';
+    const contentCount = document.getElementById('contentCount');
+    movieGrid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">Loading content...</p>';
+    if (contentCount) contentCount.textContent = 'Loading...';
     
     try {
         // Check if API key is set
         if (TMDB_API_KEY === 'YOUR_TMDB_API_KEY_HERE') {
             movieGrid.innerHTML = `
-                <div style="text-align:center;padding:20px;color:#e74c3c;">
+                <div style="text-align:center;padding:40px;color:#e74c3c;">
                     <p>⚠️ TMDB API Key not configured</p>
-                    <p style="font-size:0.9em;color:#999;">Please add your TMDB API key to script.js</p>
+                    <p style="font-size:0.9em;color:var(--text-secondary);">Please add your TMDB API key to script.js</p>
                 </div>
             `;
+            if (contentCount) contentCount.textContent = '';
             return;
         }
 
@@ -123,14 +136,15 @@ async function fetchPopularContent() {
     } catch (error) {
         console.error('Error fetching content:', error);
         movieGrid.innerHTML = `
-            <div style="text-align:center;padding:20px;color:#666;">
+            <div style="text-align:center;padding:40px;color:var(--text-secondary);">
                 <p>❌ Unable to load content</p>
-                <p style="font-size:0.9em;color:#999;">${error.message}</p>
-                <button onclick="fetchPopularContent()" style="margin-top:10px;padding:10px 20px;background:#3498db;color:white;border:none;border-radius:4px;cursor:pointer;">
+                <p style="font-size:0.9em;color:var(--text-light);">${error.message}</p>
+                <button onclick="fetchPopularContent()" style="margin-top:16px;padding:12px 28px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1rem;min-height:44px;">
                     🔄 Retry
                 </button>
             </div>
         `;
+        if (contentCount) contentCount.textContent = '';
     }
 }
 
@@ -142,7 +156,9 @@ async function searchContent(query) {
     }
     
     const movieGrid = document.getElementById('movieGrid');
-    movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Searching...</p>';
+    const contentCount = document.getElementById('contentCount');
+    movieGrid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">Searching...</p>';
+    if (contentCount) contentCount.textContent = 'Searching...';
     
     try {
         const [movieResponse, tvResponse] = await Promise.all([
@@ -160,17 +176,19 @@ async function searchContent(query) {
         populateContent(results);
     } catch (error) {
         console.error('Error searching:', error);
-        movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Error searching content. Please try again.</p>';
+        movieGrid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">Error searching content. Please try again.</p>';
+        if (contentCount) contentCount.textContent = '';
     }
 }
 
-// Show content details
+// Show content details with better rating display
 async function showContentDetails(contentId, type) {
     currentContentId = contentId;
     currentType = type;
     const modal = document.getElementById('movieModal');
     const trailerIframe = document.getElementById('trailerIframe');
     const trailerSection = document.getElementById('trailerSection');
+    const noTrailerMsg = document.getElementById('noTrailerMsg');
     const playButton = document.getElementById('playButton');
     const streamingSection = document.getElementById('streamingSection');
     const seasonSelect = document.getElementById('seasonSelect');
@@ -222,26 +240,32 @@ async function showContentDetails(contentId, type) {
         const title = details.title || details.name || 'Unknown Title';
         currentTitle = title;
         document.getElementById('modalTitle').textContent = title;
+        
+        // Rating with stars
+        const rating = details.vote_average ? formatRating(details.vote_average) : 'N/A';
+        document.getElementById('modalRating').innerHTML = `⭐ ${rating}`;
+        
         document.getElementById('modalOverview').textContent = details.overview || 'No overview available.';
         
         const posterElement = document.getElementById('modalPoster');
-        const posterUrl = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/200x300?text=No+Image';
+        const posterUrl = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/300x450?text=No+Image';
         posterElement.src = posterUrl;
 
         const year = details.release_date ? details.release_date.split('-')[0] : (details.first_air_date ? details.first_air_date.split('-')[0] : 'N/A');
         const genres = details.genres ? details.genres.map(g => g.name).join(', ') : 'N/A';
-        const rating = details.vote_average ? (details.vote_average / 10).toFixed(1) : 'N/A';
-        document.getElementById('modalInfo').textContent = `${year} | ${genres} | ${rating}`;
+        const runtime = details.runtime ? ` · ${details.runtime} min` : '';
+        document.getElementById('modalInfo').textContent = `${year} · ${genres}${runtime}`;
 
         // Handle trailer
         trailerIframe.style.display = 'none';
+        noTrailerMsg.style.display = 'none';
         let trailer = videos.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
         if (!trailer) trailer = videos.results.find(v => v.site === 'YouTube');
         if (trailer) {
             trailerIframe.src = `https://www.youtube.com/embed/${trailer.key}`;
             trailerIframe.style.display = 'block';
         } else {
-            trailerSection.innerHTML = '<h3>Trailer</h3><p>No trailer available.</p>';
+            noTrailerMsg.style.display = 'block';
         }
 
         // Handle seasons/episodes for TV shows
@@ -272,6 +296,7 @@ async function showContentDetails(contentId, type) {
         });
 
         modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
     } catch (error) {
         console.error(`Error loading ${type} details:`, error);
         alert(`Failed to load ${type} details. Please try again.`);
@@ -301,6 +326,7 @@ function closeModal() {
     const streamingIframe = document.getElementById('streamingIframe');
     streamingIframe.src = '';
     modal.style.display = 'none';
+    document.body.style.overflow = '';
     if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
     }
@@ -405,9 +431,11 @@ function playContent() {
 
     playButton.style.display = 'none';
     streamingSection.style.display = 'block';
-    streamingSection.scrollIntoView({ behavior: 'smooth' });
+    
+    setTimeout(() => {
+        streamingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 
-    // Get the selected provider
     const provider = providerSelect.value;
     const providerUrl = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
     
@@ -416,18 +444,15 @@ function playContent() {
         return;
     }
 
-    // Load the stream
     streamingIframe.src = providerUrl;
     streamingIframe.style.display = 'block';
 
-    // Try to make it fullscreen
     if (streamingIframe.requestFullscreen) {
         streamingIframe.requestFullscreen().catch(err => {
             console.log('Fullscreen request failed:', err);
         });
     }
 
-    // Handle iframe load errors
     streamingIframe.onerror = function() {
         alert('This provider is currently unavailable. Please try another provider from the dropdown.');
     };
@@ -453,7 +478,8 @@ function toggleType(type) {
     document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
     let activeBtn = document.getElementById(type === 'all' ? 'allToggle' : type === 'movie' ? 'movieToggle' : 'tvToggle');
     if (activeBtn) activeBtn.classList.add('active');
-    document.querySelector('.search-bar input').value = '';
+    const searchInput = document.querySelector('.search-bar input');
+    if (searchInput) searchInput.value = '';
     fetchPopularContent();
 }
 
@@ -524,8 +550,14 @@ document.addEventListener('DOMContentLoaded', function() {
         currentEpisode = parseInt(episodeSelect.value);
     });
 
-    // Refresh button for streaming
     if (refreshButton) {
         refreshButton.addEventListener('click', refreshStream);
     }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
 });
