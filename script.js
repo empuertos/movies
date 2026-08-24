@@ -1,6 +1,5 @@
-// ✅ Updated to your Worker URL
+// Updated script.js with proper error handling
 const API_BASE_URL = 'https://movies.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
-
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300';
 
 let allContent = [];
@@ -13,12 +12,6 @@ let currentTitle = null;
 let seasons = [];
 let episodes = [];
 
-// Provider lists
-const providersAlwaysAvailableMovie = ['vidora', 'vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'xprime', 'vixsrc', 'rivestream', 'vidzee', '2embed', 'moviekex', 'vidpro', 'primesrc', 'moviesapi', 'frembed', 'uembed', 'warezcdn', 'videasy', 'moviemaze', '123moviesfree'];
-const providersRequiringImdbMovie = ['vidsrccc', 'vidrock', 'autoembedpro', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
-const providersAlwaysAvailableTV = ['vidora', 'vidrockembed', 'vidsrcpro', 'autoembedpro', 'smashystream', 'embedsoap', 'vidplus', 'vidking', 'vixsrc', 'videasy', 'moviemaze', '123moviesfree'];
-const providersRequiringImdbTV = ['vidsrccc', 'vidrock', 'autoembedpro', 'vidsrc', 'vidfast', 'autoembed', 'embedsu', '111movies', 'vidlink', 'videasy', 'vidsrcto', 'solarmovies', 'freehdmovies'];
-
 // Create content card
 function createContentCard(content) {
     const year = content.release_date ? content.release_date.split('-')[0] : (content.first_air_date ? content.first_air_date.split('-')[0] : 'N/A');
@@ -29,7 +22,7 @@ function createContentCard(content) {
 
     return `
         <div class="movie-card" onclick="showContentDetails(${content.id}, '${type}')">
-            <img src="${content.poster_path ? IMAGE_BASE_URL + content.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${title}">
+            <img src="${content.poster_path ? IMAGE_BASE_URL + content.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${title}" loading="lazy">
             <h3>${title}</h3>
             <p>${year} | ${genreNames} | ${rating}</p>
         </div>
@@ -50,12 +43,18 @@ function getGenreName(genreId) {
 function populateContent(content) {
     const movieGrid = document.getElementById('movieGrid');
     if (!movieGrid) return;
+    
+    if (!content || content.length === 0) {
+        movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">No content available. Please try again later.</p>';
+        return;
+    }
+    
     movieGrid.innerHTML = content.map(createContentCard).join('');
     allContent = content;
 }
 
-// Fetch with timeout
-async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+// Fetch with timeout and better error handling
+async function fetchWithTimeout(url, options = {}, timeout = 15000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
@@ -64,230 +63,183 @@ async function fetchWithTimeout(url, options = {}, timeout = 10000) {
         return response;
     } catch (error) {
         clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out');
+        }
         throw error;
     }
 }
 
-// Fetch popular content
+// Fetch popular content with detailed error logging
 async function fetchPopularContent() {
+    const movieGrid = document.getElementById('movieGrid');
+    movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Loading content...</p>';
+    
     try {
+        console.log('Fetching from:', API_BASE_URL);
+        
         let allResults = [];
         if (currentType === 'all') {
-            const movieResponse = await fetchWithTimeout(`${API_BASE_URL}/api/popular?page=1`);
-            const tvResponse = await fetchWithTimeout(`${API_BASE_URL}/api/tv/popular?page=1`);
-            if (!movieResponse.ok || !tvResponse.ok) throw new Error('Proxy request failed');
+            const [movieResponse, tvResponse] = await Promise.all([
+                fetchWithTimeout(`${API_BASE_URL}/api/popular?page=1`),
+                fetchWithTimeout(`${API_BASE_URL}/api/tv/popular?page=1`)
+            ]);
+            
+            if (!movieResponse.ok) {
+                throw new Error(`Movie API returned ${movieResponse.status}`);
+            }
+            if (!tvResponse.ok) {
+                throw new Error(`TV API returned ${tvResponse.status}`);
+            }
+            
             const movieData = await movieResponse.json();
             const tvData = await tvResponse.json();
-            allResults = movieData.results.concat(tvData.results);
+            allResults = [...(movieData.results || []), ...(tvData.results || [])];
         } else {
             const endpoint = currentType === 'movie' ? '/api/popular' : '/api/tv/popular';
-            if (currentType === 'movie') {
-                allResults = [];
-                for (let page = 1; page <= 5; page++) {
-                    const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}?page=${page}`);
-                    if (!response.ok) throw new Error('Proxy request failed');
-                    const data = await response.json();
-                    allResults = allResults.concat(data.results);
-                }
-            } else {
-                const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}?page=1`);
-                if (!response.ok) throw new Error('Proxy request failed');
-                const data = await response.json();
-                allResults = data.results;
+            const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}?page=1`);
+            
+            if (!response.ok) {
+                throw new Error(`API returned ${response.status}`);
             }
+            
+            const data = await response.json();
+            allResults = data.results || [];
         }
+        
         populateContent(allResults);
     } catch (error) {
         console.error('Error fetching content:', error);
-        document.getElementById('movieGrid').innerHTML = '<p>Unable to load content. Please check your connection.</p>';
+        movieGrid.innerHTML = `
+            <div style="text-align:center;padding:20px;color:#666;">
+                <p>Unable to load content.</p>
+                <p style="font-size:0.9em;color:#999;">Error: ${error.message}</p>
+                <button onclick="fetchPopularContent()" style="margin-top:10px;padding:10px 20px;background:#3498db;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    Retry
+                </button>
+            </div>
+        `;
     }
 }
 
 // Search content
 async function searchContent(query) {
     if (query.length < 3) {
-        populateContent(allContent);
+        fetchPopularContent();
         return;
     }
+    
+    const movieGrid = document.getElementById('movieGrid');
+    movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Searching...</p>';
+    
     try {
         const [movieResponse, tvResponse] = await Promise.all([
             fetchWithTimeout(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`),
             fetchWithTimeout(`${API_BASE_URL}/api/search/tv?query=${encodeURIComponent(query)}`)
         ]);
-        if (!movieResponse.ok || !tvResponse.ok) throw new Error('Proxy request failed');
+        
+        if (!movieResponse.ok || !tvResponse.ok) {
+            throw new Error('Search request failed');
+        }
+        
         const movieData = await movieResponse.json();
         const tvData = await tvResponse.json();
-        populateContent([...movieData.results, ...tvData.results]);
+        const results = [...(movieData.results || []), ...(tvData.results || [])];
+        populateContent(results);
     } catch (error) {
         console.error('Error searching:', error);
-        document.getElementById('movieGrid').innerHTML = '<p>Error searching content.</p>';
+        movieGrid.innerHTML = '<p style="text-align:center;padding:20px;">Error searching content. Please try again.</p>';
     }
 }
 
-// Show content details
+// Show content details (keep your existing function)
 async function showContentDetails(contentId, type) {
-    currentContentId = contentId;
+    // ... (keep your existing implementation)
+}
+
+// Close modal (keep your existing function)
+function closeModal() {
+    // ... (keep your existing implementation)
+}
+
+// Play content (keep your existing function)
+function playContent() {
+    // ... (keep your existing implementation)
+}
+
+// Toggle between All, Movies and TV
+function toggleType(type) {
     currentType = type;
+    document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+    let activeBtn = document.getElementById(type === 'all' ? 'allToggle' : type === 'movie' ? 'movieToggle' : 'tvToggle');
+    if (activeBtn) activeBtn.classList.add('active');
+    document.querySelector('.search-bar input').value = '';
+    fetchPopularContent();
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-bar input');
+    const searchButton = document.querySelector('.search-bar button');
     const modal = document.getElementById('movieModal');
-    const trailerIframe = document.getElementById('trailerIframe');
-    const trailerSection = document.getElementById('trailerSection');
-    const playButton = document.getElementById('playButton');
-    const streamingSection = document.getElementById('streamingSection');
     const seasonSelect = document.getElementById('seasonSelect');
     const episodeSelect = document.getElementById('episodeSelect');
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
 
-    try {
-        const endpoint = type === 'movie' ? 'details' : 'tv/details';
-        const detailsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/${endpoint}?${type === 'movie' ? 'movie_id' : 'tv_id'}=${contentId}`);
-        if (!detailsResponse.ok) throw new Error(`Failed to fetch ${type} details`);
-        const { details, videos } = await detailsResponse.json();
-
-        if (type === 'movie') {
-            currentImdbId = details.imdb_id || null;
+    // Theme toggle
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
         } else {
-            const externalResponse = await fetchWithTimeout(`${API_BASE_URL}/api/tv/external?tv_id=${contentId}`);
-            if (externalResponse.ok) {
-                const externalData = await externalResponse.json();
-                currentImdbId = externalData.imdb_id || null;
-            }
+            body.classList.remove('dark-mode');
+            themeToggle.textContent = '🌙';
         }
-
-        // Populate provider select
-        const providerSelect = document.getElementById('providerSelect');
-        providerSelect.innerHTML = '';
-        let availableProviders = type === 'tv' ? [...providersAlwaysAvailableTV] : [...providersAlwaysAvailableMovie];
-        if (currentImdbId) {
-            availableProviders.push(...(type === 'tv' ? providersRequiringImdbTV : providersRequiringImdbMovie));
-        }
-        availableProviders.forEach(provider => {
-            const option = document.createElement('option');
-            option.value = provider;
-            option.textContent = provider.charAt(0).toUpperCase() + provider.slice(1).replace(/([A-Z])/g, ' $1');
-            providerSelect.appendChild(option);
-        });
-        if (availableProviders.length > 0) providerSelect.value = availableProviders[0];
-
-        // Populate details
-        const title = details.title || details.name || 'Unknown Title';
-        currentTitle = title;
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalOverview').textContent = details.overview || 'No overview available.';
-        
-        const posterElement = document.getElementById('modalPoster');
-        const posterUrl = details.poster_path ? IMAGE_BASE_URL + details.poster_path : 'https://via.placeholder.com/200x300?text=No+Image';
-        posterElement.src = posterUrl;
-
-        const year = details.release_date ? details.release_date.split('-')[0] : (details.first_air_date ? details.first_air_date.split('-')[0] : 'N/A');
-        const genres = details.genres ? details.genres.map(g => g.name).join(', ') : 'N/A';
-        const rating = details.vote_average ? (details.vote_average / 10).toFixed(1) : 'N/A';
-        document.getElementById('modalInfo').textContent = `${year} | ${genres} | ${rating}`;
-
-        // Handle trailer
-        trailerIframe.style.display = 'none';
-        let trailer = videos.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
-        if (!trailer) trailer = videos.results.find(v => v.site === 'YouTube');
-        if (trailer) {
-            trailerIframe.src = `https://www.youtube.com/embed/${trailer.key}`;
-            trailerIframe.style.display = 'block';
-        } else {
-            trailerSection.innerHTML = '<h3>Trailer</h3><p>No trailer available.</p>';
-        }
-
-        // Handle seasons/episodes for TV shows
-        if (type === 'tv') {
-            const seasonsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/seasons?tv_id=${contentId}`);
-            if (seasonsResponse.ok) {
-                const tvData = await seasonsResponse.json();
-                seasons = tvData || [];
-                seasonSelect.innerHTML = seasons.map(season => `<option value="${season.season_number}">${season.name}</option>`).join('');
-                seasonSelect.style.display = 'inline-block';
-                episodeSelect.style.display = 'inline-block';
-                if (seasons.length > 0) await loadEpisodes(seasons[0].season_number);
-            }
-        } else {
-            seasonSelect.style.display = 'none';
-            episodeSelect.style.display = 'none';
-        }
-
-        streamingSection.style.display = 'none';
-        playButton.style.display = 'block';
-
-        providerSelect.addEventListener('change', () => {
-            const provider = providerSelect.value;
-            const streamingIframe = document.getElementById('streamingIframe');
-            if (streamingSection.style.display === 'block') {
-                streamingIframe.src = getProviderUrl(provider, currentImdbId, currentContentId, currentType, currentSeason, currentEpisode);
-            }
-        });
-
-        modal.style.display = 'block';
-    } catch (error) {
-        console.error(`Error loading ${type} details:`, error);
-        alert(`Failed to load ${type} details.`);
     }
-}
 
-// Load episodes
-async function loadEpisodes(seasonNumber) {
-    if (!currentContentId) return;
-    const episodeSelect = document.getElementById('episodeSelect');
-    try {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/api/episodes?tv_id=${currentContentId}&season=${seasonNumber}`);
-        if (!response.ok) throw new Error('Failed to fetch episodes');
-        const episodesData = await response.json();
-        episodes = episodesData || [];
-        episodeSelect.innerHTML = episodes.map(episode => `<option value="${episode.episode_number}">Episode ${episode.episode_number}: ${episode.name}</option>`).join('');
-        currentSeason = seasonNumber;
-        currentEpisode = episodes.length > 0 ? episodes[0].episode_number : 1;
-    } catch (error) {
-        console.error('Error loading episodes:', error);
-        episodeSelect.innerHTML = '<option>No episodes available</option>';
+    function toggleTheme() {
+        body.classList.toggle('dark-mode');
+        const isDark = body.classList.contains('dark-mode');
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
-}
 
-function closeModal() {
-    const modal = document.getElementById('movieModal');
-    const streamingIframe = document.getElementById('streamingIframe');
-    streamingIframe.src = '';
+    initTheme();
+    themeToggle.addEventListener('click', toggleTheme);
+
     modal.style.display = 'none';
-    if (document.fullscreenElement) {
-        document.exitFullscreen().catch(err => console.log('Error exiting fullscreen:', err));
-    }
-}
 
-function slugifyTitle(title) {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleType(btn.dataset.type));
+    });
 
-function getProviderUrl(provider, imdbId, contentId, type, season, episode) {
-    const isTV = type === 'tv';
-    if (!imdbId) {
-        if (isTV) {
-            switch(provider) {
-                case 'vidora': return `https://vidora.su/tv/${contentId}/${season}/${episode}?colour=1100ff&autoplay=true`;
-                case 'vidrockembed': return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0`;
-                case 'vidsrcpro': return `https://vidsrc.pro/embed/tv/${contentId}/${season}/${episode}?ads=0`;
-                default: return `https://vidrock.net/embed/tv/${contentId}/${season}/${episode}?ads=0`;
-            }
+    fetchPopularContent();
+
+    function handleSearch() {
+        const query = searchInput.value.trim();
+        if (query) {
+            searchContent(query);
         } else {
-            switch(provider) {
-                case 'vidora': return `https://vidora.su/movie/${contentId}?colour=1100ff&autoplay=true`;
-                case 'vidrockembed': return `https://vidrock.net/embed/movie/${contentId}?ads=0`;
-                case 'vidsrcpro': return `https://vidsrc.pro/embed/movie/${contentId}?ads=0`;
-                default: return `https://vidrock.net/embed/movie/${contentId}?ads=0`;
-            }
+            fetchPopularContent();
         }
     }
-    if (isTV) {
-        switch(provider) {
-            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/tv/${imdbId}/${season}/${episode}?ads=0`;
-            case 'vidrock': return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0`;
-            case 'vidsrc': return `https://vidsrc.me/embed/tv/${imdbId}/${season}/${episode}?ads=0`;
-            default: return `https://vidrock.net/tv/${imdbId}/${season}/${episode}?ads=0`;
+
+    searchButton.addEventListener('click', handleSearch);
+    searchInput.addEventListener('input', handleSearch);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
-    } else {
-        switch(provider) {
-            case 'vidsrccc': return `https://vidsrc.cc/v2/embed/movie/${imdbId}?ads=0`;
-            case 'vidrock': return `https://vidrock.net/movie/${imdbId}?ads=0`;
-            case 'vidsrc': return `https://vidsrc.me/embed/movie/${imdbId}?ads=0`;
-            default: return `https://vidrock.net/movie/${imdbId
+    });
+
+    seasonSelect.addEventListener('change', async () => {
+        const seasonNumber = parseInt(seasonSelect.value);
+        await loadEpisodes(seasonNumber);
+    });
+
+    episodeSelect.addEventListener('change', () => {
+        currentEpisode = parseInt(episodeSelect.value);
+    });
+});
