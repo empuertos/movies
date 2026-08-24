@@ -1,5 +1,5 @@
 // ✅ Updated to your Worker URL
-const API_BASE_URL = 'https://movies.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';
+const API_BASE_URL = 'https://movies.22afed28-f0b2-46d0-8804-c90e25c90bd4.workers.dev';..
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w300';
 
