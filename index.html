@@ -23,7 +23,7 @@
                 <button>Search</button>
             </div>
         </div>
-    </header> <!-- ✅ Fixed: Added closing header tag -->
+    </header>
 
     <main>
         <section id="hero">
@@ -47,6 +47,7 @@
             <div class="modal-backdrop" onclick="closeModal()"></div>
             <div class="modal-content">
                 <span class="close" onclick="closeModal()">&times;</span>
+                <button onclick="closeModal()" class="back-btn">← Back</button>
                 <div class="movie-details">
                     <img id="modalPoster" src="" alt="Content Poster" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
                     <div class="details-text">
@@ -59,7 +60,7 @@
                     <h3>Trailer</h3>
                     <iframe id="trailerIframe" width="100%" height="400" frameborder="0" allowfullscreen style="display: none;"></iframe>
                 </div>
-                <button id="playButton" onclick="playContent()">Play Full Movie</button>
+                <button id="playButton" onclick="playContent()">▶ Play Full Movie</button>
                 <div id="streamingSection" style="display: none;">
                     <h3>Watch Content</h3>
                     <div class="provider-controls">
@@ -104,7 +105,7 @@
                             <option value="moviemaze">MovieMaze</option>
                             <option value="123moviesfree">123MoviesFree</option>
                         </select>
-                        <button id="refreshButton">Refresh</button>
+                        <button id="refreshButton">🔄 Refresh</button>
                     </div>
                     <iframe id="streamingIframe" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
                 </div>
